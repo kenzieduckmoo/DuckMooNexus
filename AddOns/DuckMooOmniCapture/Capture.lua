@@ -82,6 +82,54 @@ function O.Equipment()
     for slot=1,19 do rows[slot]={itemID=O.Call(GetInventoryItemID,"player",slot),link=O.Call(GetInventoryItemLink,"player",slot),texture=O.Call(GetInventoryItemTexture,"player",slot)} end
     return rows,"captured"
 end
+function O.Inventory()
+    if not api(C_Container,"GetContainerNumSlots") then return nil,"unavailable","Carried-bag API unavailable" end
+    local bags,partial={},false
+    local last=O.Safe(NUM_TOTAL_EQUIPPED_BAG_SLOTS) or 5
+    for bag=0,math.min(last,20) do
+        local slots=read(C_Container,"GetContainerNumSlots",bag)
+        if slots~=nil then
+            local free,family=read(C_Container,"GetContainerNumFreeSlots",bag)
+            local row={bagID=bag,name=read(C_Container,"GetBagName",bag) or (bag==0 and "Backpack" or "Bag "..bag),slots=slots,freeSlots=free,bagFamily=family,items={}}
+            local found=0
+            for slot=1,math.min(slots,200) do
+                local item=read(C_Container,"GetContainerItemInfo",bag,slot)
+                if item and item.itemID then
+                    local link=item.hyperlink or read(C_Container,"GetContainerItemLink",bag,slot)
+                    row.items[slot]={slot=slot,itemID=item.itemID,quantity=item.stackCount,quality=item.quality,isBound=item.isBound,iconFileID=item.iconFileID,link=link,name=link and string.match(link,"%[(.-)%]") or nil}
+                    found=found+1
+                    if not item.stackCount then partial=true end
+                end
+            end
+            if slots>200 or free==nil or slots-free~=found then partial=true end
+            bags[bag]=row
+        else partial=true end
+    end
+    if not bags[0] or not bags[0].slots or bags[0].slots<=0 then return nil,"unavailable","Backpack data not ready; previous observation retained" end
+    return {scope="carried_bags",bags=bags},partial and "partial" or "captured","Carried bags only. Bank, warbank, mail and guild storage are separate, uncaptured locations. Missing item-cache details remain unknown."
+end
+function O.Reputations()
+    local size=read(C_Reputation,"GetNumFactions")
+    if not size then return nil,"unavailable","Reputation API unavailable or not ready" end
+    local ids,rows={},{}
+    local c=O.Character()
+    for id in pairs(c.sections.reputations and c.sections.reputations.data or {}) do ids[id]=true end
+    for index=1,math.min(size,3000) do
+        local faction=read(C_Reputation,"GetFactionDataByIndex",index)
+        if faction and faction.factionID and (not faction.isHeader or faction.hasRep) then ids[faction.factionID]=true end
+    end
+    for id in pairs(ids) do
+        local faction=read(C_Reputation,"GetFactionDataByID",id)
+        if faction and faction.name then
+            local major=read(C_MajorFactions,"GetMajorFactionData",id)
+            rows[id]={factionID=id,name=faction.name,reaction=faction.reaction,standingName=faction.reaction and _G["FACTION_STANDING_LABEL"..faction.reaction],
+                value=faction.currentStanding,min=faction.currentReactionThreshold,max=faction.nextReactionThreshold,accountWide=faction.isAccountWide,
+                renownLevel=major and major.renownLevel,renownEarned=major and major.renownReputationEarned,renownThreshold=major and major.renownLevelThreshold}
+        end
+    end
+    if not next(rows) then return nil,"unavailable","No readable faction rows returned; previous observation retained" end
+    return rows,"partial","Visible faction rows and previously observed IDs; collapsed/undiscovered factions may be absent. Account-wide progress stays labeled."
+end
 function O.Quests()
     local ids=read(C_QuestLog,"GetAllCompletedQuestIDs")
     if not ids then return nil,"unavailable","Completed quest list not ready" end
@@ -112,7 +160,7 @@ end
 function O.Scan(reason,only)
     if not O.Character() then return end
     if O.Call(InCombatLockdown) then O.pending=true;return end
-    local handlers={profile=O.Profile,currencies=O.Currencies,vault=O.Vault,lockouts=O.Lockouts,keystone=O.Keystone,equipment=O.Equipment,quests=O.Quests,knowledge=O.Knowledge}
+    local handlers={profile=O.Profile,currencies=O.Currencies,vault=O.Vault,lockouts=O.Lockouts,keystone=O.Keystone,equipment=O.Equipment,quests=O.Quests,knowledge=O.Knowledge,inventory=O.Inventory,reputations=O.Reputations}
     for key,fn in pairs(handlers) do
         if not only or only[key] then
             O.readLimited=false

@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import {CharacterHistory} from './character-history';
+import {CapturedBags} from './captured-bags';
 import {CharacterProgress,ProfessionKnowledge} from './character-progress';
 import {useEffect,useRef,useState} from 'react';
 import {motion,useReducedMotion} from 'motion/react';
@@ -38,7 +39,7 @@ export function CharacterSheet({guid}:{guid:string}){const [data,setData]=useSta
  {tab==='stats'&&<StatsPanel data={data}/>}
  {tab==='talents'&&<section className="surface sheet-section"><div className="section-heading"><div><div className="eyebrow">{data.folio.loadout??c.specialization??'RECORDED BUILD'}</div><h2>Talents & specialization</h2></div><Source name="DuckMoo Folio" time={data.folioObservedAt}/></div><div className="talent-grid">{values(data.folio.talents).map((t:Data,i)=><div className="talent-tile" key={i}><span className="talent-node"><Sparkles size={18}/></span><div><b>{gameText(t.name)}</b><small>{t.rank} / {t.max} ranks</small></div><span className="talent-rank">{t.rank}</span></div>)}</div>{!values(data.folio.talents).length&&<p className="muted-copy">No addon talent selection captured yet. API selections remain available below.</p>}<DataTree label="API specializations and loadouts" value={data.api.specializations?.payload??{status:'Not returned'}}/></section>}
  {tab==='professions'&&<ProfessionsPanel data={data} minute={minute}/>}
- {tab==='inventory'&&<InventoryPanel data={data}/>}
+ {tab==='inventory'&&<><CapturedBags data={data}/><InventoryPanel data={data}/></>}
  {tab==='progress'&&<CharacterProgress data={data}/>}
  {tab==='collections'&&<CollectionsPanel data={data}/>}
  {tab==='notes'&&<section className="sheet-notes-grid">{Object.entries(data.folio.notes??{}).map(([key,value])=><article className="surface sheet-section" key={key}><div className="eyebrow">SAVED IN DUCKMOO FOLIO</div><h2>{pretty(key)}</h2><p className="folio-note">{gameText(value)||'No note captured in this section.'}</p></article>)}{!Object.keys(data.folio.notes??{}).length&&<div className="surface compact-empty">No notes captured yet. Existing notes are preserved in their source addon.</div>}</section>}

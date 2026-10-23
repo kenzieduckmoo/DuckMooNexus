@@ -8,7 +8,7 @@ function O.Schedule(keys)
     scheduled=true
     C_Timer.After(3,function() local selected=not full and dirty or nil;scheduled=false;dirty={};full=false;O.Scan("change",selected) end)
 end
-local refresh={CURRENCY_DISPLAY_UPDATE=true,WEEKLY_REWARDS_UPDATE=true,WEEKLY_REWARDS_ITEM_CHANGED=true,UPDATE_INSTANCE_INFO=true,CHALLENGE_MODE_COMPLETED=true,CHALLENGE_MODE_MAPS_UPDATE=true,PLAYER_EQUIPMENT_CHANGED=true,TRADE_SKILL_SHOW=true,TRAIT_CONFIG_UPDATED=true,SKILL_LINES_CHANGED=true,PLAYER_MONEY=true,ZONE_CHANGED_NEW_AREA=true,PLAYER_SPECIALIZATION_CHANGED=true,PLAYER_REGEN_ENABLED=true,PLAYER_ENTERING_WORLD=true}
+local refresh={BAG_UPDATE_DELAYED=true,UPDATE_FACTION=true,MAJOR_FACTION_RENOWN_LEVEL_CHANGED=true,CURRENCY_DISPLAY_UPDATE=true,WEEKLY_REWARDS_UPDATE=true,WEEKLY_REWARDS_ITEM_CHANGED=true,UPDATE_INSTANCE_INFO=true,CHALLENGE_MODE_COMPLETED=true,CHALLENGE_MODE_MAPS_UPDATE=true,PLAYER_EQUIPMENT_CHANGED=true,TRADE_SKILL_SHOW=true,TRAIT_CONFIG_UPDATED=true,SKILL_LINES_CHANGED=true,PLAYER_MONEY=true,ZONE_CHANGED_NEW_AREA=true,PLAYER_SPECIALIZATION_CHANGED=true,PLAYER_REGEN_ENABLED=true,PLAYER_ENTERING_WORLD=true}
 frame:SetScript("OnEvent",function(_,event,...)
     if event=="ADDON_LOADED" then
         if ...==name then O.Init() end
@@ -38,7 +38,7 @@ frame:SetScript("OnEvent",function(_,event,...)
         if event=="CURRENCY_DISPLAY_UPDATE" then
             local id=O.Safe((...));if type(id)=="number" and id>0 then O.currencyIDs=O.currencyIDs or {};O.currencyIDs[id]=true end
         end
-        local sections={CURRENCY_DISPLAY_UPDATE="currencies",PLAYER_MONEY="profile",ZONE_CHANGED_NEW_AREA="profile",PLAYER_EQUIPMENT_CHANGED="profile equipment",PLAYER_SPECIALIZATION_CHANGED="profile",TRADE_SKILL_SHOW="knowledge",TRAIT_CONFIG_UPDATED="knowledge",SKILL_LINES_CHANGED="knowledge",WEEKLY_REWARDS_UPDATE="vault",WEEKLY_REWARDS_ITEM_CHANGED="vault",UPDATE_INSTANCE_INFO="lockouts",CHALLENGE_MODE_COMPLETED="vault lockouts keystone",CHALLENGE_MODE_MAPS_UPDATE="keystone"}
+        local sections={BAG_UPDATE_DELAYED="inventory",UPDATE_FACTION="reputations",MAJOR_FACTION_RENOWN_LEVEL_CHANGED="reputations",CURRENCY_DISPLAY_UPDATE="currencies",PLAYER_MONEY="profile",ZONE_CHANGED_NEW_AREA="profile",PLAYER_EQUIPMENT_CHANGED="profile equipment",PLAYER_SPECIALIZATION_CHANGED="profile",TRADE_SKILL_SHOW="knowledge",TRAIT_CONFIG_UPDATED="knowledge",SKILL_LINES_CHANGED="knowledge",WEEKLY_REWARDS_UPDATE="vault",WEEKLY_REWARDS_ITEM_CHANGED="vault",UPDATE_INSTANCE_INFO="lockouts",CHALLENGE_MODE_COMPLETED="vault lockouts keystone",CHALLENGE_MODE_MAPS_UPDATE="keystone"}
         if event=="PLAYER_REGEN_ENABLED" and not O.pending then return end
         O.pending=false
         O.Schedule(sections[event])

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 
 OMNI_SOURCE='DuckMooOmniCapture.lua'
 OMNI_VERSION='0.1.0-omni1'
-SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge'}
+SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge','inventory','reputations'}
 
 def omni_rows(data):
     db=data.get('DuckMooOmniCaptureDB')

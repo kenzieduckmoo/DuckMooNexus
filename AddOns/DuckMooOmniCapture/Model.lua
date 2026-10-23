@@ -1,5 +1,5 @@
 local _, O = ...
-O.version = "0.1.0"
+O.version = "0.1.1"
 function O.Safe(value, depth, seen, budget)
     if issecretvalue and issecretvalue(value) then return nil end
     local kind = type(value)

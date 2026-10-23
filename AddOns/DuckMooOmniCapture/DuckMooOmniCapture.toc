@@ -2,7 +2,7 @@
 ## Title: DuckMoo Omni Capture
 ## Notes: Independent, timestamped character observations for DuckMoo Nexus.
 ## Author: DuckMoo Media
-## Version: 0.1.0
+## Version: 0.1.1
 ## Category: DuckMoo Media
 ## SavedVariables: DuckMooOmniCaptureDB
 Model.lua

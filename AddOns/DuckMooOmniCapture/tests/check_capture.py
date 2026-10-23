@@ -24,6 +24,10 @@ C_CurrencyInfo={GetCurrencyListSize=function() return 1 end,GetCurrencyListInfo=
 Enum={WeeklyRewardChestThresholdType={Activities=1,Raid=3,World=6}}
 C_WeeklyRewards={GetActivities=function() return {{id=1,type=6,index=1,progress=4,threshold=2}} end,HasAvailableRewards=function() return false end}
 C_DateAndTime={GetSecondsUntilWeeklyReset=function() return 600 end}
+NUM_TOTAL_EQUIPPED_BAG_SLOTS=5
+C_Container={GetContainerNumSlots=function(bag) assert(bag>=0 and bag<=5);return bag==0 and 3 or 0 end,GetContainerNumFreeSlots=function(bag) return bag==0 and 2 or 0 end,GetBagName=function(bag) return 'Fixture bag '..bag end,GetContainerItemInfo=function(bag,slot) if bag==0 and slot==1 then return {itemID=123,stackCount=2,isBound=true,quality=2,hyperlink='|Hitem:123|h[Named bag fixture]|h',iconFileID=42} end end}
+C_Reputation={GetNumFactions=function() return 1 end,GetFactionDataByIndex=function() return {factionID=100} end,GetFactionDataByID=function() return {name='Fixture faction',reaction=5,currentStanding=1250,currentReactionThreshold=0,nextReactionThreshold=3000,isAccountWide=true} end}
+C_MajorFactions={GetMajorFactionData=function() return {renownLevel=12,renownReputationEarned=750,renownLevelThreshold=2500} end}
 ''')
 for name in ('Model.lua','Capture.lua','Core.lua'):
     lua.execute('assert(loadstring(...))("DuckMooOmniCapture",O)',(ROOT/name).read_text(encoding='utf-8'))
@@ -33,6 +37,19 @@ local c=O.Character()
 assert(c.sections.currencies.data[3310].name=='Named currency fixture')
 assert(c.sections.currencies.data[3310].description==nil)
 assert(c.sections.vault.data.tracks.world[1].progress==4)
+assert(c.sections.inventory.status=='captured')
+assert(c.sections.inventory.data.bags[0].items[1].name=='Named bag fixture')
+assert(c.sections.inventory.data.bags[0].items[1].isBound==true)
+assert(c.sections.reputations.data[100].renownLevel==12 and c.sections.reputations.data[100].accountWide==true)
+local container=C_Container;C_Container=nil;O.Scan('unavailable',{inventory=true})
+assert(c.sections.inventory.status=='unavailable' and c.sections.inventory.data.bags[0].items[1].quantity==2)
+C_Container=container
+local getItem=C_Container.GetContainerItemInfo
+C_Container.GetContainerItemInfo=function() return nil end
+C_Container.GetContainerNumFreeSlots=function(bag) return bag==0 and 3 or 0 end
+O.Scan('empty',{inventory=true});assert(next(c.sections.inventory.data.bags[0].items)==nil and c.sections.inventory.status=='captured')
+C_Container.GetContainerItemInfo=getItem;C_Container.GetContainerNumFreeSlots=function(bag) return bag==0 and 2 or 0 end
+O.Scan('restore',{inventory=true})
 local old=c.sections.vault.observedAt
 NOW=NOW+10;C_WeeklyRewards.GetActivities=nil;O.Scan('retry',{vault=true})
 assert(c.sections.vault.status=='unavailable' and c.sections.vault.observedAt==old)
@@ -53,12 +70,14 @@ def plain(v):
 data={'DuckMooOmniCaptureDB':plain(lua.globals().DuckMooOmniCaptureDB)}
 rows=list(omni_rows(data))
 assert any(r[1]=='omni_event' and r[5]['kind']=='quest_completed' for r in rows)
+assert any(r[2]=='inventory' and r[5]['data']['scope']=='carried_bags' for r in rows)
+assert any(r[2]=='reputations' and r[5]['data'][100]['accountWide'] for r in rows)
 assert any(r[2]=='currencies' and r[5]['data'][3310]['name']=='Named currency fixture' for r in rows)
 # A malformed schema is rejected without interpreting it as empty coverage.
 try:list(omni_rows({'DuckMooOmniCaptureDB':{'schema':999}}))
 except ValueError:pass
 else:raise AssertionError('Unknown schema accepted')
-print('Lua51 capture and import contract passed: named currencies, vault, retained last-known data, settings and coalesced section refresh.')
+print('Lua51 capture and import contract passed, including empty/unavailable bag reads, bank exclusion and labeled renown/warband reputation.')
 
 if '--fixture' in sys.argv:
     import json

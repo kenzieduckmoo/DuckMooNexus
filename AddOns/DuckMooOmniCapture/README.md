@@ -1,4 +1,4 @@
-# DuckMoo Omni Capture 0.1.0 — Retail preview
+# DuckMoo Omni Capture 0.1.1 — Retail preview
 
 Independent from DuckMooCapture, DuckMooFolio, WarbandNexus and WoWthing Collector. No addon dependency. Uses its own `DuckMooOmniCaptureDB`, settings and capture lifecycle. Category: DuckMoo Media.
 
@@ -16,6 +16,8 @@ Commands: `/dmomni`, `/dmomni capture`, `/dmomni on`, `/dmomni off`, `/dmomni ev
 - Named currencies: quantity, icon file ID, caps, weekly/total-earned counters, account-wide/transfer flags where the client returns them. It reads visible rows, previously observed IDs and currency events without changing your currency list. Collapsed/undiscovered rows may be absent, so coverage is explicitly partial.
 - Great Vault: activity tracks, thresholds/progress, available reward state, reset timestamp, and example reward item level when item data is available. Empty/not-ready APIs do not erase prior observations.
 - Saved instances: names, difficulty, reset timestamp, locked/extended flags and individual boss observations.
+- Carried bags and equipped reagent bag: named items, slots/counts, binding, quality and cache-available texture/link metadata. Empty captures replace old contents; unavailable reads retain prior observations. Banks are not scanned through guessed container IDs.
+- Visible/previously observed reputations: names, standing, account-wide labels and renown level/progress where available. Hidden rows remain partial coverage.
 - Owned keystone level/map/name; equipment IDs, links and texture IDs; completed quest IDs.
 - Profession knowledge: naturally opened profession's specialization tabs, currency pool and available node ranks; retained independently by skill line.
 - Timestamped events: sessions, levels, quest turn-ins, own loot chat, deaths, achievements and encounter endings.
@@ -26,6 +28,6 @@ These are observations, not exhaustive coverage. API restrictions, hidden data a
 
 Server source adapter archives the complete saved file first, then normalizes identity, sections and journal into PostgreSQL. Website progress/history consumes that source alongside older collectors. New Omni identities can create character pages and join the public-profile enrichment queue.
 
-Currency icon IDs are preserved; resolving every icon into a website image is a separate enrichment step. Other future coverage includes bags/bank, deeper reputations/collections/weekly activities, richer session/dungeon details and reliable journal rotation. Existing collectors remain useful sources for those areas.
+Currency icon IDs are preserved; resolving every icon into a website image is a separate enrichment step. Other future coverage includes bank storage, deeper collections/weekly activities, richer session/dungeon details and reliable journal rotation. Existing collectors remain useful sources for those areas.
 
 Retail only in this preview. Forever compatibility and its in-game verification wait until November 4. This release has Lua 5.1 mock and server adapter checks; actual in-game capture/reload/upload behavior has not yet been verified.
