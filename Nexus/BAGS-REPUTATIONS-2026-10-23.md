@@ -13,3 +13,5 @@ Follow-up to the GitHub source import. Omni Capture Retail preview is now 0.1.1.
 Focused Lua 5.1 checks cover unavailable/empty bags, carried-only boundaries and renown/account labels. TypeScript checks passed. Real in-game capture, saved-file upload and observed item/faction coverage remain unverified until the user next logs in and reloads/logs out.
 
 The 10,000-event preview journal limit and acknowledged-rotation requirement remain. Currency icon IDs remain captured but not fully resolved to website image URLs. Bank storage, deeper collection coverage and Forever client work remain pending. Keep the original SavedVariables and raw source archives intact.
+
+Deployment completed with production build/TypeScript success. Final source backup: `/opt/duckmoo-nexus-clean/web-update-backups/20261023T194243Z-omni-capture`. Installed Retail version: 0.1.1. Browser confirmed the direct-bag waiting state and available reputation source choices without replacing existing cached observations. Source changes are published in GitHub commit `ff4ef56df542c2a4afef0b0a3af61dea4916c616`.
