@@ -91,6 +91,9 @@ profile=next(r for r in recovered if r[2]=='profile')
 assert profile[3]==100 and profile[5]['data']['ilvl']==123 and profile[5]['recoveredFromEvent']==1
 assert legacy['characters']['Player-104-ABC']['sections']['profile']['data']['ilvl']==0
 assert next(r for r in recovered if r[2]=='quests')[5]['data'] is None
+# Loading the new addon on one character does not repair the others in-place.
+legacy['version']='0.1.2'
+assert next(r for r in omni_rows({'DuckMooOmniCaptureDB':legacy}) if r[2]=='profile')[5]['recoveredFromEvent']==1
 print('Lua51 capture and import contract passed, including empty/unavailable bag reads, bank exclusion and labeled renown/warband reputation.')
 
 if '--fixture' in sys.argv:
