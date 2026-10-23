@@ -1,0 +1,16 @@
+apiVersion: 1
+datasources:
+  - name: DuckMoo PostgreSQL
+    uid: duckmoo-postgres
+    type: grafana-postgresql-datasource
+    url: postgres:5432
+    user: grafana
+    isDefault: true
+    editable: false
+    jsonData:
+      database: nexus
+      sslmode: disable
+      postgresVersion: 1700
+      timescaledb: false
+    secureJsonData:
+      password: $GF_DB_PASSWORD

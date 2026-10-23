@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh Crafting Desk from Nexus PostgreSQL
+Requires=docker.service
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/duckmoo-nexus-clean
+ExecStart=/usr/bin/docker compose -f compose.yaml -f compose.crafting.yaml run --rm -T crafting-refresh
+TimeoutStartSec=600

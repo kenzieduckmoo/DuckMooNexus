@@ -1,0 +1,10 @@
+## Interface: 120005, 120007, 120100, 120105
+## Title: DuckMoo Omni Capture
+## Notes: Independent, timestamped character observations for DuckMoo Nexus.
+## Author: DuckMoo Media
+## Version: 0.1.0
+## Category: DuckMoo Media
+## SavedVariables: DuckMooOmniCaptureDB
+Model.lua
+Capture.lua
+Core.lua

@@ -1,0 +1,9 @@
+[Unit]
+Description=Import additional Nexus sources separately from Journalator
+
+[Timer]
+OnActiveSec=60s
+OnUnitInactiveSec=60s
+
+[Install]
+WantedBy=timers.target

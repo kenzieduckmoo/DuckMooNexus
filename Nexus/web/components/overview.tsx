@@ -1,0 +1,34 @@
+'use client';
+import Link from 'next/link';
+import {HeroScene} from '@/lib/hero-scenes';
+import {balanceWindow} from '@/lib/balance-window';
+import { useEffect,useState } from 'react';
+import { motion,useReducedMotion } from 'motion/react';
+import { ArrowRight,ArrowUpRight,Coins,UsersRound,Package,ChartNoAxesCombined,Hammer,Database,RefreshCw,Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { HistoryChart } from './chart';
+import { ago,gold,number } from '@/lib/utils';
+import {AutoStatus,useNexusRevision} from './freshness';
+type Data=Record<string,any>;
+export function Overview({hero}:{hero:HeroScene}){
+ const [data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[period,setPeriod]=useState(30),[loading,setLoading]=useState(true);const reduced=useReducedMotion(),revision=useNexusRevision();
+ function load(){setLoading(true);setError('');fetch('/api/nexus?view=overview').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);setData(d);}).catch(e=>setError(e.message)).finally(()=>setLoading(false));}
+ useEffect(()=>{load();},[revision.sources,revision.market,revision.characters]);
+ const bank=data?.bank??[],latest=bank.at(-1);
+ const {chart,first,latest:windowLatest,change}=balanceWindow(bank,period);
+ return <motion.div initial={reduced?false:{opacity:0,y:12}} animate={{opacity:1,y:0}} transition={{duration:.4}} className="page-content">
+ <div className="page-kicker"><span className="small-diamond"/> THE WARBAND AT A GLANCE</div><div className="page-title-row"><div><h1>Welcome to your Nexus<span>.</span></h1><p className="page-subtitle">Every character. Every craft. A clearer picture of what comes next.</p></div><AutoStatus/></div>
+ <section className="hero-panel"><img className="hero-art" src={hero.src} alt={hero.alt} fetchPriority="high" decoding="async"/><div className="hero-shade"/><div className="hero-copy"><Badge className="gold-badge">YOUR PERSONAL WARBAND COMPANION</Badge><h2>A whole warband.<br/>One place to make it count.</h2><p>Your markets, materials and crafting possibilities,<br className="desktop-br"/> brought together on Nexus.</p><Link className="gold-link" href="/auctions">Explore the Auction House <ArrowRight size={17}/></Link></div><div className="hero-caption"><span className="live-dot"/> RETAIL · MIDNIGHT <span>{hero.name}</span></div></section>
+ {error&&<div className="error-panel" role="alert">{error} <button onClick={load}>Try again</button></div>}
+ <div className="stat-grid">{[
+  {label:'Recorded warbank balance',value:latest?gold(Number(latest.value)*10000)+' g':'—',icon:Coins,note:latest?'Observed '+ago(latest.time):'Waiting for bank history',color:'gold'},
+  {label:'Characters in your roster',value:data?number(data.stats.characters):'—',icon:UsersRound,note:data?number(data.stats.crafters)+' with profession records':'Loading your roster',color:'blue'},
+  {label:'Listings in latest snapshots',value:data?number(data.stats.listings):'—',icon:ChartNoAxesCombined,note:data?data.markets.length+' imported market scopes':'Loading market snapshots',color:'teal'},
+  {label:'Items you can search',value:data?number(data.stats.items):'—',icon:Package,note:'Named items from your collected sources',color:'purple'}
+ ].map(s=><section className="stat-card" key={s.label}><div className="stat-label">{s.label}<s.icon className={s.color} size={18}/></div><strong>{s.value}</strong><small>{s.note}</small></section>)}</div>
+ <div className="overview-columns"><section className="surface bank-panel"><div className="section-heading"><div><div className="eyebrow">THE GOLD YOU ACTUALLY HOLD</div><h2>Warbank over time</h2></div><div className="segmented" aria-label="Balance chart time range">{[7,30,90].map(d=><button key={d} aria-pressed={period===d} onClick={()=>setPeriod(d)}>{d}D</button>)}</div></div><div className="bank-total">{latest?gold(Number(latest.value)*10000):'—'}<span>gold</span>{change!=null&&<small className={change>=0?'positive':'negative'} title={first&&windowLatest?'Difference between '+new Date(first.time).toLocaleString()+' and '+new Date(windowLatest.time).toLocaleString():undefined}>{change>=0?'+':''}{gold(change*10000)} g since first sample in {period}D</small>}</div>{loading&&!data?<div className="chart-skeleton"/>:<HistoryChart points={chart}/>}<div className="chart-footnote">Recorded bank balances · Last {period} days · Transfers can change this balance; it is not a profit calculation.</div></section>
+ <section className="surface quick-panel"><div className="section-heading"><div><div className="eyebrow">MAKE YOUR NEXT MOVE</div><h2>Your workspaces</h2></div></div><Link className="workspace-card" href="/auctions"><span className="workspace-icon"><ChartNoAxesCombined/></span><div><h3>Auction House</h3><p>Find an item. Follow its market.</p><small>Prices · Supply · Recorded history</small></div><ArrowUpRight size={18}/></Link><a className="workspace-card" href="/crafting"><span className="workspace-icon teal"><Hammer/></span><div><h3>Crafting Desk</h3><p>Turn your materials into a plan.</p><small>Crafters · Concentration · Shopping</small></div><ArrowUpRight size={18}/></a><Link className="workspace-card" href="/characters"><span className="workspace-icon"><UsersRound/></span><div><h3>Character sheets</h3><p>The whole character, brought together.</p><small>Equipment · Progress · Professions</small></div><ArrowUpRight size={18}/></Link><a className="workspace-card" href="/finances"><span className="workspace-icon purple"><Coins/></span><div><h3>Financial dashboards</h3><p>Follow the gold your warband makes.</p><small>Income · Expenses · Patron orders</small></div><ArrowUpRight size={18}/></a></section></div>
+ <section className="surface sources-panel"><div className="section-heading"><div><div className="eyebrow">CONNECTED TO YOUR GAME</div><h2>Your data, arriving on Nexus</h2></div><span className="quiet-label"><Database size={15}/> SavedVariables + Blizzard API</span></div><div className="source-grid">{(data?.sources??[]).filter((s:Data)=>['DuckMooCapture.lua','DuckMooFolio.lua','Syndicator.lua','TSM_AppData.lua'].includes(s.source)).map((s:Data)=><div className="source-card" key={s.source}><span className="source-check"><Check size={15}/></span><div><b>{{'DuckMooCapture.lua':'Crafting captures','DuckMooFolio.lua':'Character snapshots','Syndicator.lua':'Inventory','TSM_AppData.lua':'TSM market data'}[s.source as string]??s.source}</b><small>File saved {ago(s.source_saved_at)}</small><small>Received {ago(s.captured_at)}</small></div></div>)}</div><p className="source-explainer">WoW saves on reload or logout. Your desktop sync sends those files to Nexus automatically; Nexus notices new data and updates this page automatically.</p></section>
+ </motion.div>;
+}

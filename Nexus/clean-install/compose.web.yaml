@@ -1,0 +1,14 @@
+services:
+  web:
+    build: ./web
+    image: duckmoo-nexus-web
+    restart: unless-stopped
+    ports: ["10.20.30.239:80:3001"]
+    env_file: [./web.env]
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy

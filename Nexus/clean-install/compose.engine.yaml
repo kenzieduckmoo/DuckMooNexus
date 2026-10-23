@@ -1,0 +1,13 @@
+services:
+  craft-engine:
+    build:
+      context: .
+      dockerfile: craft-engine/Dockerfile
+    image: duckmoo-nexus-craft-engine
+    restart: unless-stopped
+    mem_limit: 6g
+    environment:
+      CRAFTING_STATE: /crafting-state
+      CRAFTING_BACKEND: http://crafting:8765
+    volumes:
+      - /var/lib/duckmoo-crafting:/crafting-state:ro

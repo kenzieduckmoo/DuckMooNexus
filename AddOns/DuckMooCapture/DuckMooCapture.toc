@@ -1,0 +1,13 @@
+## Interface: 120005, 120007, 120100
+## Title: DuckMoo Services: Crafting Capture
+## Notes: Read-only crafting operation snapshots for the local Crafting Desk.
+## Author: DuckMoo Media
+## Version: 0.8.0
+## SavedVariables: DuckMooCaptureDB
+## Category: DuckMoo Media
+Model.lua
+Core.lua
+Passive.lua
+Combinations.lua
+Scanner.lua
+Acquisition.lua

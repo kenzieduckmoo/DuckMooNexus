@@ -1,0 +1,10 @@
+[Unit]
+Description=Check for completed Journalator uploads each minute
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=60s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

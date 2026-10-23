@@ -1,0 +1,30 @@
+const assert=require('node:assert/strict');
+const guides=require('./profession-guides.js');
+const {guideStarter,guideShopping,guideRecipe,guideImport}=require('./guide-planner.js');
+const {investmentQualifies,investmentRecovery}=require('./recipe-investments.js');
+assert.equal(guides.length,9);for(const g of guides){assert.ok(g.url.startsWith('https://www.wow-professions.com/'));assert.ok(g.steps.length);assert.ok(g.last);}
+const c={guid:'a',name:'A',realm:'One'};
+const data={inventory:{names:{'i:1':'Herb','i:2':'Herb','i:3':'Ore'},tiers:{'i:1':1,'i:2':2},items:{'i:2':[{owner:'A-One',quantity:3,bound:true,location:'bags'}],'i:3':[{owner:'B-One',quantity:100,bound:true,location:'bags'}]}},market:{commodities:{'i:1':{price:20,scope:'US'},'i:2':{price:10,scope:'US'},'i:3':{price:30,scope:'US'}}}};
+let p=guideShopping(data,c,{Herb:5,Ore:2});assert.equal(p.total,110);assert.equal(p.buy,80);assert.equal(p.rows[0].tier,2);assert.equal(p.rows[1].missing,2);
+const imp=guideImport(p.rows);assert.ok(imp.text.includes('"Herb";;;;;;;;;;;2;;2'));assert.equal(imp.omitted.length,0);
+assert.equal(guideShopping(data,c,{Unknown:1}).total,null);assert.equal(guideImport(guideShopping(data,c,{Unknown:1}).rows).omitted.length,1);
+const vendor={guid:'a',kind:'vendor',itemID:3,price:10,stackCount:2,hasExtendedCost:false,isPurchasable:true,numAvailable:-1,observedAt:Date.now()/1000,npcName:'Supply'};
+p=guideShopping({...data,acquisitionOffers:[vendor]},c,{Ore:4});assert.equal(p.total,20);assert.equal(guideImport(p.rows).text,'');
+p=guideStarter(data,c,{supplies:{Herb:2},alternatives:[{names:['Herb','Ore'],count:3}]});assert.equal(p.rows[0].needed,5);assert.equal(p.choices[0].name,'Herb');
+const recipe={name:'Thing',guid:'a',learned:true,observedAt:1000,profession:{expansionName:'Midnight',parentProfessionName:'Alchemy'},schematic:{reagentSlotSchematics:{1:{required:true,quantityRequired:2,reagents:{1:{itemID:1},2:{itemID:2}}}}}};
+p=guideRecipe({...data,catalog:[recipe]},c,{name:'Alchemy'},'Thing',3);assert.equal(p.total,60);assert.equal(p.buy,30);assert.equal(p.rows[0].needed,6);assert.ok(p.learned);
+assert.ok(guideRecipe({...data,catalog:[recipe],market:{}},c,{name:'Alchemy'},'Thing').error);
+const e={margin:21,sales:{saleRate:0.11},result:{finance:{profit:300}},setup:{quantity:3},observedAt:1000};
+assert.ok(investmentQualifies(e,1001));assert.ok(!investmentQualifies({...e,margin:20},1001));assert.ok(!investmentQualifies({...e,sales:{saleRate:0.1}},1001));assert.ok(!investmentQualifies(e,90000));assert.equal(investmentRecovery(1000,300,3),10);assert.equal(investmentRecovery(1000,0,3),null);
+console.log('Guide tests passed: nine routes, current quality selection, shared stock, missing prices, vendor purchase separation, alternate inputs, recipe batches, strict investment thresholds and per-item payback.');
+const {guideTrainerRecipes}=require('./guide-planner.js');
+const source='|cFFFFD200Profession Trainer: |rMidnight Alchemy (15)';
+const trainerRecipe={...recipe,recipeID:42,sourceText:source};
+let trainer=guideTrainerRecipes({catalog:[{...trainerRecipe,guid:'other',observedAt:2000},trainerRecipe,{...trainerRecipe,recipeID:43,sourceText:'Vendor: Midnight Alchemy (15)'},{...trainerRecipe,recipeID:44,sourceText:'Profession Trainer: Midnight Alchemy (80)'}]},c,{name:'Alchemy',early:50});
+assert.equal(trainer.length,1);assert.equal(trainer[0].skill,15);assert.equal(trainer[0].learned,true);
+const fixedSlot={...recipe,schematic:{reagentSlotSchematics:{1:{required:true,quantityRequired:1,reagents:{1:{itemID:1}}}}}};
+p=guideRecipe({...data,catalog:[fixedSlot]},c,{name:'Alchemy'},'Thing');
+assert.equal(p.rows[0].item,'i:1');assert.equal(p.rows[0].tier,1);assert.ok(guideImport(p.rows).text.includes('"Herb";;;;;;;;;;;1;;1'));
+console.log('Trainer deduplication and exact reagent-quality regression tests passed.');
+
+assert.equal(guideImport([{item:'i:1',name:'Ambiguous',tier:1,missing:2}], 'Check', {names:{'i:1':'Ambiguous','i:2':'Ambiguous'},tiers:{'i:1':1,'i:2':1}}).text,'');

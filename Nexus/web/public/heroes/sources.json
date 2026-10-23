@@ -1,0 +1,34 @@
+[
+  {
+    "file": "/heroes/eversong.webp",
+    "source": "https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/blt93cdd164034d510c/688a75dc822391bd776512fe/Eversong.png",
+    "page": "https://worldofwarcraft.blizzard.com/en-us/midnight",
+    "bytes": 694126,
+    "credit": "Blizzard Entertainment",
+    "optimization": "1920px WebP, quality 85; original artwork retained locally"
+  },
+  {
+    "file": "/heroes/zulaman.webp",
+    "source": "https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltecd5dccf9dc65c3f/688a7632b1a42e118c532bb6/ZulAman.png",
+    "page": "https://worldofwarcraft.blizzard.com/en-us/midnight",
+    "bytes": 535854,
+    "credit": "Blizzard Entertainment",
+    "optimization": "1920px WebP, quality 85; original artwork retained locally"
+  },
+  {
+    "file": "/heroes/harandar.webp",
+    "source": "https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/bltd1fffc73c099911d/688a767b3d8e9047c0a08e10/Harandar.png",
+    "page": "https://worldofwarcraft.blizzard.com/en-us/midnight",
+    "bytes": 577376,
+    "credit": "Blizzard Entertainment",
+    "optimization": "1920px WebP, quality 85; original artwork retained locally"
+  },
+  {
+    "file": "/heroes/voidstorm.webp",
+    "source": "https://blz-contentstack-images.akamaized.net/v3/assets/blt3452e3b114fab0cd/blt829dfbc85ae48697/68954ca1b748b51b3655afb6/Voidstorm.png",
+    "page": "https://worldofwarcraft.blizzard.com/en-us/midnight",
+    "bytes": 583544,
+    "credit": "Blizzard Entertainment",
+    "optimization": "1920px WebP, quality 85; original artwork retained locally"
+  }
+]

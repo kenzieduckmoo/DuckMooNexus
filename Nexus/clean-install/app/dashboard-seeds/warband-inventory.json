@@ -1,0 +1,1776 @@
+{
+  "uid": "duckmoo-warband-inventory",
+  "title": "DuckMoo Nexus | Warband Inventory",
+  "description": "Search cached item names across characters, the Warbank and guild banks. Individual item observation times are unavailable.",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "editable": true,
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "tags": [
+    "DuckMoo Nexus"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Account",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT namespace FROM nexus.imports UNION SELECT DISTINCT namespace FROM nexus.source_snapshots",
+        "current": {
+          "text": "retail-main-account",
+          "value": "retail-main-account"
+        },
+        "refresh": 1
+      },
+      {
+        "name": "item_search",
+        "label": "Item name or ID",
+        "type": "textbox",
+        "query": "",
+        "current": {
+          "text": "",
+          "value": ""
+        }
+      },
+      {
+        "name": "owner",
+        "label": "Owner",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT owner_kind||': '||owner_key AS __text,owner_kind||':'||owner_key AS __value FROM nexus.current_inventory WHERE namespace=${account:sqlstring} ORDER BY 1",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      },
+      {
+        "name": "location",
+        "label": "Location",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT location FROM nexus.current_inventory WHERE namespace=${account:sqlstring} ORDER BY 1",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Matching stock by owner and location",
+      "type": "table",
+      "description": "Partial names work. Crafting rank stays separate from item rarity. Guild stock, equipped items, mail and auctions are shown with their own location; they are not automatically usable crafting supplies. Timestamp is the source file save, not a fresh inspection of each item.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 13
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "\u2014"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_quality"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_rank"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_kind"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Owner type"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "character": {
+                        "text": "Character"
+                      },
+                      "warband": {
+                        "text": "Warband"
+                      },
+                      "guild": {
+                        "text": "Guild"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_key"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "location"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Location"
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "bags": {
+                        "text": "Bags"
+                      },
+                      "bank": {
+                        "text": "Bank"
+                      },
+                      "bankTabs": {
+                        "text": "Character bank"
+                      },
+                      "equipped": {
+                        "text": "Equipped"
+                      },
+                      "mail": {
+                        "text": "Mail"
+                      },
+                      "auctions": {
+                        "text": "Posted auctions"
+                      },
+                      "void": {
+                        "text": "Void storage"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "quantity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Quantity"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_bound"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Binding"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "true": {
+                        "text": "Bound"
+                      },
+                      "false": {
+                        "text": "Unbound"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rarity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rarity"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Poor"
+                      },
+                      "1": {
+                        "text": "Common"
+                      },
+                      "2": {
+                        "text": "Uncommon"
+                      },
+                      "3": {
+                        "text": "Rare"
+                      },
+                      "4": {
+                        "text": "Epic"
+                      },
+                      "5": {
+                        "text": "Legendary"
+                      },
+                      "6": {
+                        "text": "Artifact"
+                      },
+                      "7": {
+                        "text": "Heirloom"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_id"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item ID"
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "snapshot_file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lowest_unit_gold"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lowest unit price"
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "invoice_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Invoice gold"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_variant"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Variant details"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "source_modified_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market updated"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fetched_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Fetched"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scope"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "commodities": {
+                        "text": "US commodities"
+                      },
+                      "connected-realm:11": {
+                        "text": "Tichondrius"
+                      },
+                      "connected-realm:57": {
+                        "text": "Illidan"
+                      },
+                      "connected-realm:61": {
+                        "text": "Zul'jin"
+                      },
+                      "connected-realm:63": {
+                        "text": "Ysera"
+                      },
+                      "connected-realm:76": {
+                        "text": "Sargeras"
+                      },
+                      "connected-realm:99": {
+                        "text": "Llane"
+                      },
+                      "connected-realm:104": {
+                        "text": "Garona / Malygos"
+                      },
+                      "connected-realm:162": {
+                        "text": "Emerald Dream"
+                      },
+                      "connected-realm:1426": {
+                        "text": "Aerie Peak"
+                      },
+                      "connected-realm:3675": {
+                        "text": "Moon Guard"
+                      },
+                      "connected-realm:3685": {
+                        "text": "Turalyon"
+                      },
+                      "connected-realm:3721": {
+                        "text": "Saurfang"
+                      },
+                      "connected-realm:3726": {
+                        "text": "Aman'Thul / Khaz'goroth"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "listings"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Listings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "characters"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Characters"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "guilds"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Guild caches"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warbanks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Warbanks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stacks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item stacks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT name AS item,crafting_quality AS crafting_rank,\n       owner_kind,owner_key AS owner,location,quantity,is_bound,rarity,item_id,snapshot_file_saved_at FROM nexus.inventory_totals WHERE namespace=${account:sqlstring}\n      AND (strpos(lower(coalesce(name,'')),lower(${item_search:sqlstring}))>0 OR item_id::text=${item_search:sqlstring})\n      AND owner_kind||':'||owner_key IN (${owner:sqlstring}) AND location IN (${location:sqlstring})\n       ORDER BY name,crafting_quality NULLS LAST,owner_kind,owner_key,location LIMIT 1000",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 2,
+      "title": "Matching totals by item and storage",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "\u2014"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_quality"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_rank"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_kind"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Owner type"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "character": {
+                        "text": "Character"
+                      },
+                      "warband": {
+                        "text": "Warband"
+                      },
+                      "guild": {
+                        "text": "Guild"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_key"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "location"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Location"
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "bags": {
+                        "text": "Bags"
+                      },
+                      "bank": {
+                        "text": "Bank"
+                      },
+                      "bankTabs": {
+                        "text": "Character bank"
+                      },
+                      "equipped": {
+                        "text": "Equipped"
+                      },
+                      "mail": {
+                        "text": "Mail"
+                      },
+                      "auctions": {
+                        "text": "Posted auctions"
+                      },
+                      "void": {
+                        "text": "Void storage"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "quantity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Quantity"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_bound"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Binding"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "true": {
+                        "text": "Bound"
+                      },
+                      "false": {
+                        "text": "Unbound"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rarity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rarity"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Poor"
+                      },
+                      "1": {
+                        "text": "Common"
+                      },
+                      "2": {
+                        "text": "Uncommon"
+                      },
+                      "3": {
+                        "text": "Rare"
+                      },
+                      "4": {
+                        "text": "Epic"
+                      },
+                      "5": {
+                        "text": "Legendary"
+                      },
+                      "6": {
+                        "text": "Artifact"
+                      },
+                      "7": {
+                        "text": "Heirloom"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_id"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item ID"
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "snapshot_file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lowest_unit_gold"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lowest unit price"
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "invoice_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Invoice gold"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_variant"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Variant details"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "source_modified_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market updated"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fetched_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Fetched"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scope"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "commodities": {
+                        "text": "US commodities"
+                      },
+                      "connected-realm:11": {
+                        "text": "Tichondrius"
+                      },
+                      "connected-realm:57": {
+                        "text": "Illidan"
+                      },
+                      "connected-realm:61": {
+                        "text": "Zul'jin"
+                      },
+                      "connected-realm:63": {
+                        "text": "Ysera"
+                      },
+                      "connected-realm:76": {
+                        "text": "Sargeras"
+                      },
+                      "connected-realm:99": {
+                        "text": "Llane"
+                      },
+                      "connected-realm:104": {
+                        "text": "Garona / Malygos"
+                      },
+                      "connected-realm:162": {
+                        "text": "Emerald Dream"
+                      },
+                      "connected-realm:1426": {
+                        "text": "Aerie Peak"
+                      },
+                      "connected-realm:3675": {
+                        "text": "Moon Guard"
+                      },
+                      "connected-realm:3685": {
+                        "text": "Turalyon"
+                      },
+                      "connected-realm:3721": {
+                        "text": "Saurfang"
+                      },
+                      "connected-realm:3726": {
+                        "text": "Aman'Thul / Khaz'goroth"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "listings"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Listings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "characters"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Characters"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "guilds"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Guild caches"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warbanks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Warbanks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stacks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item stacks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT name AS item,crafting_quality AS crafting_rank,\n       owner_kind,location,is_bound,sum(quantity) AS quantity,item_id FROM nexus.inventory_totals WHERE namespace=${account:sqlstring}\n      AND (strpos(lower(coalesce(name,'')),lower(${item_search:sqlstring}))>0 OR item_id::text=${item_search:sqlstring})\n      AND owner_kind||':'||owner_key IN (${owner:sqlstring}) AND location IN (${location:sqlstring})\n       GROUP BY name,crafting_quality,owner_kind,location,is_bound,item_id ORDER BY name,crafting_quality,owner_kind,location LIMIT 500",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 3,
+      "title": "Inventory capture coverage",
+      "type": "table",
+      "description": "A newer file can still contain old offline-character caches. No per-item observation date is supplied by this source.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "\u2014"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              },
+              {
+                "id": "custom.width",
+                "value": 300
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_quality"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "crafting_rank"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Crafting rank"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_kind"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Owner type"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "character": {
+                        "text": "Character"
+                      },
+                      "warband": {
+                        "text": "Warband"
+                      },
+                      "guild": {
+                        "text": "Guild"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "owner_key"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character / bank"
+              },
+              {
+                "id": "custom.width",
+                "value": 250
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "location"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Location"
+              },
+              {
+                "id": "custom.width",
+                "value": 160
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "bags": {
+                        "text": "Bags"
+                      },
+                      "bank": {
+                        "text": "Bank"
+                      },
+                      "bankTabs": {
+                        "text": "Character bank"
+                      },
+                      "equipped": {
+                        "text": "Equipped"
+                      },
+                      "mail": {
+                        "text": "Mail"
+                      },
+                      "auctions": {
+                        "text": "Posted auctions"
+                      },
+                      "void": {
+                        "text": "Void storage"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "quantity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Quantity"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_bound"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Binding"
+              },
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "true": {
+                        "text": "Bound"
+                      },
+                      "false": {
+                        "text": "Unbound"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rarity"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Rarity"
+              },
+              {
+                "id": "custom.width",
+                "value": 110
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "0": {
+                        "text": "Poor"
+                      },
+                      "1": {
+                        "text": "Common"
+                      },
+                      "2": {
+                        "text": "Uncommon"
+                      },
+                      "3": {
+                        "text": "Rare"
+                      },
+                      "4": {
+                        "text": "Epic"
+                      },
+                      "5": {
+                        "text": "Legendary"
+                      },
+                      "6": {
+                        "text": "Artifact"
+                      },
+                      "7": {
+                        "text": "Heirloom"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_id"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item ID"
+              },
+              {
+                "id": "custom.width",
+                "value": 85
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "snapshot_file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lowest_unit_gold"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Lowest unit price"
+              },
+              {
+                "id": "custom.width",
+                "value": 155
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "invoice_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Invoice gold"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_variant"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Variant details"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "source_modified_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market updated"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "fetched_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Fetched"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scope"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Market"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "commodities": {
+                        "text": "US commodities"
+                      },
+                      "connected-realm:11": {
+                        "text": "Tichondrius"
+                      },
+                      "connected-realm:57": {
+                        "text": "Illidan"
+                      },
+                      "connected-realm:61": {
+                        "text": "Zul'jin"
+                      },
+                      "connected-realm:63": {
+                        "text": "Ysera"
+                      },
+                      "connected-realm:76": {
+                        "text": "Sargeras"
+                      },
+                      "connected-realm:99": {
+                        "text": "Llane"
+                      },
+                      "connected-realm:104": {
+                        "text": "Garona / Malygos"
+                      },
+                      "connected-realm:162": {
+                        "text": "Emerald Dream"
+                      },
+                      "connected-realm:1426": {
+                        "text": "Aerie Peak"
+                      },
+                      "connected-realm:3675": {
+                        "text": "Moon Guard"
+                      },
+                      "connected-realm:3685": {
+                        "text": "Turalyon"
+                      },
+                      "connected-realm:3721": {
+                        "text": "Saurfang"
+                      },
+                      "connected-realm:3726": {
+                        "text": "Aman'Thul / Khaz'goroth"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "listings"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Listings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "characters"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Characters"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "guilds"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Guild caches"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "warbanks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Warbanks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stacks"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item stacks"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "file_saved_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cache file saved"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT c.characters,c.guilds,c.warbanks,c.stacks,s.source_saved_at AS file_saved_at,\n        s.captured_at,s.normalized_version FROM nexus.inventory_snapshot_coverage c\n        JOIN nexus.source_snapshots s ON s.id=c.snapshot_id WHERE s.namespace=${account:sqlstring}\n        ORDER BY s.source_saved_at DESC NULLS LAST,s.captured_at DESC LIMIT 1",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    }
+  ],
+  "links": [
+    {
+      "title": "Character Observatory",
+      "type": "link",
+      "url": "/d/duckmoo-character-observatory",
+      "targetBlank": false
+    },
+    {
+      "title": "Auction Analysis",
+      "type": "link",
+      "url": "/d/duckmoo-azeroth-stock-exchange",
+      "targetBlank": false
+    },
+    {
+      "title": "Warband Financials",
+      "type": "link",
+      "url": "/d/duckmoo-warband-financials",
+      "targetBlank": false
+    }
+  ]
+}

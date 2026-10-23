@@ -1,0 +1,9 @@
+[Unit]
+Description=DuckMoo Nexus Blizzard AH collection
+Requires=docker.service
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/duckmoo-nexus-clean
+ExecStart=/usr/bin/docker compose -f compose.yaml -f compose.api.yaml run --rm -T api
+TimeoutStartSec=1800

@@ -218,3 +218,37 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Nexus source-only checkout
+node_modules/
+.next/
+.build/
+*.tsbuildinfo
+*.env
+.env.*
+!.env.example
+config.json
+state/
+private-snapshots/
+*.lua.gz
+*.lua.bak
+*.bundle
+*.receipt.json
+*.dump
+*.sql.gz
+*.sqlite*
+local-data.json
+saved-setups.json
+daily-plan.json
+*.pem
+*.key
+id_ed25519*
+id_rsa*
+# Keep maintained website library source (generic Python template ignores lib/).
+!Nexus/web/lib/
+!Nexus/web/lib/**
+
+
+# Generated release and source-archive packages
+*.zip
+*.tar.gz

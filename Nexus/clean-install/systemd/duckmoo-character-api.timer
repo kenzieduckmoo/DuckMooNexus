@@ -1,0 +1,8 @@
+[Unit]
+Description=Check for changed character snapshots
+[Timer]
+OnBootSec=4min
+OnUnitInactiveSec=5min
+Persistent=true
+[Install]
+WantedBy=timers.target

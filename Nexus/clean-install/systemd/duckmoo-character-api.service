@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh Nexus public character profiles
+Requires=docker.service
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/duckmoo-nexus-clean
+ExecStart=/usr/bin/docker compose -f compose.yaml -f compose.characters.yaml run --rm -T character-api
+TimeoutStartSec=1800

@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const {compareCrafters}=require('./material-ui.js');
+const recipe={key:'c:1:q2',output:'i:9',quantity:1,materials:{'i:1':2},scope:'Alliance - A',crafters:[{name:'First',realm:'A',guid:'one'}]};
+const second={...recipe,scope:'Horde - B',crafters:[{name:'Second',realm:'B',guid:'two'}]};
+const inventory={items:{'i:1':[{owner:'Second-B',location:'bags',quantity:4,bound:true}]}};
+const market={realms:{a:{'i:1':{price:10}},b:{'i:1':{price:20}}}};
+const rows=compareCrafters([recipe,second,second,{...recipe,key:'c:1:q3'}, {...recipe,materials:{'i:1':3}}],recipe,{'i:1':'i:1'},2,inventory,market);
+assert.equal(rows.length,2);
+assert.equal(rows[0].crafter.name,'Second');
+assert.equal(rows[0].plan.buyCost,0);
+assert.equal(rows[0].plan.materialCost,80);
+assert.equal(rows[1].plan.buyCost,40);
+const missing=compareCrafters([recipe,second],recipe,{'i:1':'i:1'},2,{}, {realms:{b:market.realms.b}});
+assert.equal(missing[0].crafter.name,'Second');
+assert.equal(missing[1].plan.buyCost,null);
+const unresolved=compareCrafters([recipe],recipe,{},1,inventory,market);
+assert.equal(unresolved[0].plan.buyCost,null);
+console.log('Crafter comparison checks passed');

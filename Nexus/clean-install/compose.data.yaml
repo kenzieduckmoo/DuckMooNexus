@@ -1,0 +1,12 @@
+services:
+  data:
+    image: duckmoo-nexus-clean-ingest
+    entrypoint: ["python", "nexus_data_api.py"]
+    restart: unless-stopped
+    ports: ["10.20.30.239:8080:8080"]
+    environment:
+      DATABASE_URL: postgresql://grafana:${GF_DB_PASSWORD}@postgres/nexus
+      GRAFANA_AUTH_URL: http://grafana:3000/api/user
+    depends_on:
+      postgres:
+        condition: service_healthy

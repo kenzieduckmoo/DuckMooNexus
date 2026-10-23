@@ -1,0 +1,837 @@
+{
+  "uid": "duckmoo-character-observatory",
+  "title": "DuckMoo Nexus | Character Observatory",
+  "description": "Latest saved character details from Folio and Planner. History graphs use the date range; roster and details show the latest normalized source. Concentration is projected, not live.",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "editable": true,
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "tags": [
+    "DuckMoo Nexus"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Account",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT namespace FROM nexus.character_roster ORDER BY 1",
+        "current": {
+          "text": "retail-main-account",
+          "value": "retail-main-account"
+        },
+        "refresh": 1
+      },
+      {
+        "name": "character",
+        "label": "Character",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT name||' - '||realm AS __text,character_guid AS __value FROM nexus.character_roster WHERE namespace=${account:sqlstring} ORDER BY CASE name WHEN 'Rolla' THEN 1 WHEN 'Stormlesbian' THEN 2 WHEN 'Hammeredchic' THEN 3 WHEN 'Stabbiechick' THEN 4 WHEN 'Kenziemoo' THEN 5 WHEN 'Pandaquack' THEN 6 WHEN 'Fearfulchick' THEN 7 WHEN 'Pandachicken' THEN 8 WHEN 'Kaidiellicia' THEN 9 WHEN 'Meepkin' THEN 10 WHEN 'Bloodchicken' THEN 11 WHEN 'Voidchicken' THEN 12 WHEN 'Kaissiriah' THEN 13 WHEN 'Zaraevelina' THEN 14 WHEN 'Trunktix' THEN 15 WHEN 'Darayeda' THEN 16 WHEN 'Kyootchick' THEN 17 WHEN 'Risharika' THEN 18 WHEN 'Duckmoochick' THEN 19 ELSE 100 END,name,realm",
+        "refresh": 1,
+        "current": {
+          "text": "Rolla - Malygos",
+          "value": "Player-104-0021EA6C"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Captured characters",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT count(*) AS characters FROM nexus.character_roster WHERE namespace=${account:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Recorded character level",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT level FROM nexus.character_roster WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Character overview",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT name AS \"Character\",realm AS \"Realm\",class_name AS \"Class\",race AS \"Race\",faction AS \"Faction\",\n level AS \"Level\",round(item_level,2) AS \"Item level\",specialization AS \"Specialization\",hero_specialization AS \"Hero specialization\",\n role AS \"Role\"\n FROM nexus.character_roster WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 4,
+      "title": "Where you left off",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT zone AS \"Zone\",subzone AS \"Location\",guild AS \"Guild\",last_seen AS \"Last seen\",source_saved_at AS \"File saved\"\n FROM nexus.character_roster WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 5,
+      "title": "Professions and expansion skills",
+      "type": "table",
+      "description": "Recipe counts reflect the filters active when captured; they are not guaranteed complete recipe ownership counts.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT profession AS \"Profession\",expansion_skill AS \"Expansion skill\",\n skill AS \"Skill\",maximum AS \"Maximum\",recorded_recipes AS \"Recipes shown\",recipe_list_filtered AS \"Recipe list filtered\",\n observed_at AS \"Observed\" FROM nexus.character_professions WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}\n ORDER BY CASE WHEN profession IN ('Cooking','Fishing','Archaeology') THEN 1 ELSE 0 END,\n CASE WHEN skill_line_id IN (SELECT skill_line_id FROM nexus.character_concentration WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring} AND NOT hidden) THEN 0 ELSE 1 END,\n profession,CASE WHEN recorded_recipes IS NOT NULL THEN 0 ELSE 1 END,observed_at DESC NULLS LAST,expansion_skill",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 6,
+      "title": "Projected concentration",
+      "type": "table",
+      "description": "Projected from saved amount and recharge rate, capped at the recorded maximum. Assumes no unrecorded spending. Planned crafts/reservations are not deducted. Hidden Planner pools are omitted.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT profession AS \"Profession\",expansion AS \"Expansion\",\n sampled_amount AS \"Recorded amount\",projected_amount AS \"Projected now\",maximum AS \"Maximum\",observed_at AS \"Sample time\"\n FROM nexus.character_concentration WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring} AND NOT hidden ORDER BY profession,expansion",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 7,
+      "title": "Your patron reminders",
+      "type": "table",
+      "description": "Your saved Planner reminders. A reminder day is not confirmation that new orders are currently available.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT profession AS \"Profession\",expansion AS \"Expansion\",\n to_char(to_timestamp((payload #>> '{patron,due}')::double precision) AT TIME ZONE 'America/Chicago','YYYY-MM-DD') AS \"Reminder day\",\n to_timestamp((payload #>> '{patron,lastDone}')::double precision) AS \"Last marked done\",\n CASE payload #>> '{patron,mode}' WHEN 'four' THEN 'Every four days' ELSE 'Weekly' END AS \"Schedule\"\n FROM nexus.character_concentration WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring} AND NOT hidden AND payload ? 'patron' ORDER BY 3,profession",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 8,
+      "title": "Reputations",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT payload->>'name' AS \"Faction\",(payload->>'renown')::integer AS \"Renown\",\n CASE WHEN payload ? 'renown' THEN 'Renown' ELSE CASE payload->>'reaction'\n WHEN '1' THEN 'Hated' WHEN '2' THEN 'Hostile' WHEN '3' THEN 'Unfriendly' WHEN '4' THEN 'Neutral'\n WHEN '5' THEN 'Friendly' WHEN '6' THEN 'Honored' WHEN '7' THEN 'Revered' WHEN '8' THEN 'Exalted' ELSE 'Unknown' END END AS \"Standing\",\n (payload->>'value')::numeric AS \"Recorded progress\",\n (payload->>'max')::numeric AS \"Recorded maximum\",(payload->>'accountWide')::boolean AS \"Account-wide\",\n observed_at AS \"Captured\" FROM nexus.current_character_records\n WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring} AND record_kind='reputation' ORDER BY \"Renown\" DESC NULLS LAST,\"Faction\"",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 9,
+      "title": "Recorded specialization nodes",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT p.profession AS \"Profession\",p.expansion_skill AS \"Expansion skill\",\n node.value->>'name' AS \"Node\",(node.value->>'rank')::integer AS \"Rank\",(node.value->>'max')::integer AS \"Maximum\",p.observed_at AS \"Captured\"\n FROM nexus.character_professions p CROSS JOIN LATERAL jsonb_each(coalesce(p.payload->'knowledge','{}'::jsonb)) node\n WHERE p.namespace=${account:sqlstring} AND p.character_guid=${character:sqlstring} ORDER BY 1,2,3",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 10,
+      "title": "Observed level history",
+      "type": "timeseries",
+      "description": "Recorded samples only. Archives cannot reconstruct character changes that were never captured.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT DISTINCT ON(r.observed_at) r.observed_at AS time,(r.payload->>'level')::numeric AS \"Level\"\n FROM nexus.character_records r JOIN nexus.snapshot_characters l ON l.observation_id=r.id\n JOIN nexus.source_snapshots s ON s.id=l.snapshot_id\n WHERE r.namespace=${account:sqlstring} AND r.character_guid=${character:sqlstring}\n AND r.source='DuckMooFolio.lua' AND r.record_kind='profile' AND r.payload ? 'level' AND $__timeFilter(r.observed_at)\n ORDER BY r.observed_at,s.source_saved_at DESC NULLS LAST,s.captured_at DESC,s.id DESC",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 11,
+      "title": "Observed item-level history",
+      "type": "timeseries",
+      "description": "Recorded samples only. Archives cannot reconstruct character changes that were never captured.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 52,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT DISTINCT ON(r.observed_at) r.observed_at AS time,(r.payload->>'ilvl')::numeric AS \"Item level\"\n FROM nexus.character_records r JOIN nexus.snapshot_characters l ON l.observation_id=r.id\n JOIN nexus.source_snapshots s ON s.id=l.snapshot_id\n WHERE r.namespace=${account:sqlstring} AND r.character_guid=${character:sqlstring}\n AND r.source='DuckMooFolio.lua' AND r.record_kind='profile' AND r.payload ? 'ilvl' AND $__timeFilter(r.observed_at)\n ORDER BY r.observed_at,s.source_saved_at DESC NULLS LAST,s.captured_at DESC,s.id DESC",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 12,
+      "title": "Collection totals reported by Folio",
+      "type": "table",
+      "description": "Cached addon-reported totals, which may be incomplete. Account collection totals are not summed across characters.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 24,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT\n (payload #>> '{collections,mounts}')::integer AS \"Mounts reported\",\n (payload #>> '{collections,pets}')::integer AS \"Pets reported\",\n (payload #>> '{collections,toys}')::integer AS \"Toys reported\",\n (payload #>> '{collections,achievementPoints}')::integer AS \"Achievement points reported\",\n last_seen AS \"Character last seen\" FROM nexus.character_roster WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 13,
+      "title": "Recorded combat stats",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 24,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT (payload #>> '{stats,strength}')::numeric AS \"Strength\",\n (payload #>> '{stats,agility}')::numeric AS \"Agility\",(payload #>> '{stats,intellect}')::numeric AS \"Intellect\",\n (payload #>> '{stats,stamina}')::numeric AS \"Stamina\",(payload #>> '{stats,crit}')::numeric AS \"Critical strike %\",\n (payload #>> '{stats,haste}')::numeric AS \"Haste %\",(payload #>> '{stats,mastery}')::numeric AS \"Mastery %\",\n (payload #>> '{stats,movement}')::numeric AS \"Movement %\",last_seen AS \"Character last seen\"\n FROM nexus.character_roster WHERE namespace=${account:sqlstring} AND character_guid=${character:sqlstring}",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 14,
+      "title": "Recorded talents",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 70,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT talent.value->>'name' AS \"Talent\",(talent.value->>'rank')::integer AS \"Rank\",\n (talent.value->>'max')::integer AS \"Maximum\",talent.value->>'spellID' AS \"Spell ID\"\n FROM nexus.character_roster c CROSS JOIN LATERAL jsonb_each(coalesce(c.payload->'talents','{}'::jsonb)) talent\n WHERE c.namespace=${account:sqlstring} AND c.character_guid=${character:sqlstring} ORDER BY 1",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 15,
+      "title": "Warband roster",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 80,
+        "w": 24,
+        "h": 12
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT name AS \"Character\",realm AS \"Realm\",class_name AS \"Class\",level AS \"Level\",\n round(item_level,2) AS \"Item level\",specialization AS \"Specialization\",zone AS \"Zone\",last_seen AS \"Last seen\"\n FROM nexus.character_roster WHERE namespace=${account:sqlstring} ORDER BY CASE name WHEN 'Rolla' THEN 1 WHEN 'Stormlesbian' THEN 2 WHEN 'Hammeredchic' THEN 3 WHEN 'Stabbiechick' THEN 4 WHEN 'Kenziemoo' THEN 5 WHEN 'Pandaquack' THEN 6 WHEN 'Fearfulchick' THEN 7 WHEN 'Pandachicken' THEN 8 WHEN 'Kaidiellicia' THEN 9 WHEN 'Meepkin' THEN 10 WHEN 'Bloodchicken' THEN 11 WHEN 'Voidchicken' THEN 12 WHEN 'Kaissiriah' THEN 13 WHEN 'Zaraevelina' THEN 14 WHEN 'Trunktix' THEN 15 WHEN 'Darayeda' THEN 16 WHEN 'Kyootchick' THEN 17 WHEN 'Risharika' THEN 18 WHEN 'Duckmoochick' THEN 19 ELSE 100 END,name,realm",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 16,
+      "title": "Data freshness",
+      "type": "table",
+      "description": "File-save times and source observation times are separate. These counts describe normalized data, not live game access.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 92,
+        "w": 24,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*(%|Item level)$"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "WITH latest AS (\n SELECT DISTINCT ON(source) source,source_saved_at,normalized_version FROM nexus.source_snapshots\n WHERE namespace=${account:sqlstring} AND source IN ('DuckMooFolio.lua','DuckMooPlanner.lua')\n ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC\n), counts AS (\n SELECT source,count(*) AS records,count(DISTINCT character_guid) AS characters,max(observed_at) AS newest\n FROM nexus.current_character_records WHERE namespace=${account:sqlstring} GROUP BY source\n)\nSELECT replace(l.source,'.lua','') AS \"Source\",c.records AS \"Observations\",c.characters AS \"Characters\",\n l.source_saved_at AS \"Latest source file\",c.newest AS \"Newest observation\",\n CASE WHEN l.normalized_version='0.5.0-characters1' THEN 'Imported' ELSE 'Awaiting normalization' END AS \"Import status\"\n FROM latest l LEFT JOIN counts c ON c.source=l.source ORDER BY l.source",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+const {dailyCandidates}=require('./daily-plan.js');
+const {readyBatch,concentrationReady}=require('./concentration-ready.js');
+const now=1000;
+function recipe(id,cost,profit){return {key:`c:${id}:q1`,scope:'Alliance - One',name:'Recipe '+id,profession:'Alchemy',materials:{'i:1':4},quantity:1,output:'i:'+id,crafters:[{name:'A',realm:'One',guid:'A'}],capture:{observedAt:now,concentration:cost,skillLineID:1}};}
+const s={recipes:[recipe(2,600,1000),recipe(3,200,250)],characters:[{name:'A',realm:'One',guid:'A',professions:[{id:1,name:'Midnight Alchemy',concentration:{amount:1000,max:1000,observedAt:now}}]}],catalog:[2,3].map(recipeID=>({guid:'A',recipeID,learned:true,observedAt:now,cooldownCaptured:true,cooldown:{seconds:0,observedAt:now}})),market:{commodities:{'i:1':{price:1,scope:'US'},'i:2':{price:1004,scope:'US'},'i:3':{price:254,scope:'US'}}},inventory:{items:{}}};
+const entries=dailyCandidates(s,[],0,now);
+let rows=concentrationReady(s,entries,{},[],now);
+assert.equal(rows[0].best.count,5);assert.equal(rows[0].best.profit,1250);assert.equal(rows[0].best.left,0);
+assert.equal(rows[0].alternatives[0].profit,1000);
+assert.equal(readyBatch(entries[0],599),null);
+const queued={...entries.find(e=>e.setup.concentration===200).setup,count:2};
+rows=concentrationReady(s,entries,{},[queued],now);
+assert.equal(rows[0].available,600);assert.equal(rows[0].best.profit,1000);assert.equal(rows[0].best.buy,4);
+assert.equal(concentrationReady(s,entries,{stockOnly:true},[],now)[0].best,null);
+s.inventory.items['i:1']=[{owner:'Warband',location:'warband',quantity:20,bound:true}];
+assert.equal(concentrationReady(s,entries,{stockOnly:true},[],now)[0].best.count,5);
+s.catalog[1].cooldown={charges:2,maxCharges:2,seconds:0,observedAt:now};
+assert.equal(concentrationReady(s,entries,{},[queued],now)[0].best.entry.setup.concentration,600);
+s.catalog[0].cooldownCaptured=false;
+assert.equal(concentrationReady(s,entries,{},[queued],now)[0].best,null);
+s.characters[0].professions[0].concentration.observedAt=now+301;
+assert.deepEqual(concentrationReady(s,entries,{},[],now),[]);
+console.log('Concentration ready: batch-profit example, reservations, shared stock, cooldown charges and future snapshots passed.');

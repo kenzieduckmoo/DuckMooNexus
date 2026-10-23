@@ -1,0 +1,24 @@
+services:
+  crafting:
+    image: duckmoo-nexus-clean-ingest
+    entrypoint: ["python", "/app/craftingdesk/hosted_server.py"]
+    restart: unless-stopped
+    ports: ["10.20.30.239:8765:8765"]
+    env_file: [./crafting.env]
+    environment:
+      PYTHONPATH: /app:/app/craftingdesk
+      CRAFTING_STATE: /crafting-state
+      CRAFTING_ACCESS: lan
+      CRAFTING_ORIGINS: http://10.20.30.239:8765,http://localhost:8765,http://127.0.0.1:8765
+    volumes: [/var/lib/duckmoo-crafting:/crafting-state]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  crafting-refresh:
+    image: duckmoo-nexus-clean-ingest
+    entrypoint: ["python", "/app/craftingdesk/nexus_snapshot.py"]
+    env_file: [./crafting.env]
+    environment:
+      PYTHONPATH: /app:/app/craftingdesk
+      CRAFTING_STATE: /crafting-state
+    volumes: [/var/lib/duckmoo-crafting:/crafting-state]

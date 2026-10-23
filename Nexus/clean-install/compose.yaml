@@ -1,0 +1,46 @@
+name: duckmoo-nexus-clean
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexus
+      POSTGRES_DB: nexus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus -d nexus"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+  ingest:
+    build: ./app
+    entrypoint: ["python", "service.py"]
+    environment:
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD}@postgres/nexus
+      GF_DB_PASSWORD: ${GF_DB_PASSWORD}
+    volumes:
+      - /var/lib/duckmoo-nexus-sources:/sources:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+  grafana:
+    image: grafana/grafana:12.2.0
+    restart: unless-stopped
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DB_PASSWORD: ${GF_DB_PASSWORD}
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./app/grafana:/var/lib/grafana/dashboards:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+volumes:
+  db:
+  grafana:

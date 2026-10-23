@@ -1,0 +1,11 @@
+services:
+  character-api:
+    image: duckmoo-nexus-clean-ingest
+    entrypoint: ["python", "/app/character_api_worker.py"]
+    command: ["--limit", "8"]
+    env_file: [./api.env]
+    environment:
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD}@postgres/nexus
+    depends_on:
+      postgres:
+        condition: service_healthy

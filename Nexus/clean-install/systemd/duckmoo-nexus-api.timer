@@ -1,0 +1,8 @@
+[Unit]
+Description=Check Nexus AH collection and retry schedules
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=5min
+Persistent=true
+[Install]
+WantedBy=timers.target

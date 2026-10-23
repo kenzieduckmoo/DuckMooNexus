@@ -1,0 +1,344 @@
+{
+  "uid": "duckmoo-azeroth-stock-exchange",
+  "title": "DuckMoo Nexus | Azeroth Stock Exchange",
+  "description": "Observed prices, supply and listings. API listing disappearance is not a confirmed sale. Auctionator buckets are daily extrema, TSM sale rates are regional estimates.",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "editable": true,
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "tags": [
+    "DuckMoo Nexus"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Account",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT namespace FROM nexus.imports UNION SELECT DISTINCT namespace FROM nexus.source_snapshots",
+        "current": {
+          "text": "retail-main-account",
+          "value": "retail-main-account"
+        },
+        "refresh": 1
+      },
+      {
+        "name": "item",
+        "label": "Item ID/key",
+        "type": "textbox",
+        "query": "241281",
+        "current": {
+          "text": "241281",
+          "value": "241281"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Auctionator daily price range for selected item",
+      "type": "timeseries",
+      "description": "Bucket start is local Jan 1 2020 epoch plus elapsed 86400-second days; no exact scan time claimed.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT observed_at AS time,scope||' low' AS metric,(metrics->>'lowest_low')::numeric/10000.0 AS value FROM nexus.market_observations WHERE namespace=${account:sqlstring} AND item_key IN (${item:sqlstring},'i:'||${item:sqlstring}) AND time_precision='day_bucket' AND $__timeFilter(observed_at) ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 2,
+      "title": "Auctionator observed daily peak availability",
+      "type": "timeseries",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT observed_at AS time,scope AS metric,(metrics->>'highest_quantity')::numeric AS value FROM nexus.market_observations WHERE namespace=${account:sqlstring} AND item_key IN (${item:sqlstring},'i:'||${item:sqlstring}) AND time_precision='day_bucket' AND $__timeFilter(observed_at) ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 3,
+      "title": "TSM downloaded prices",
+      "type": "timeseries",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT observed_at AS time,scope AS metric,(metrics->>'min_buyout')::numeric/10000.0 AS value FROM nexus.market_observations WHERE namespace=${account:sqlstring} AND item_key IN (${item:sqlstring},'i:'||${item:sqlstring}) AND metrics ? 'min_buyout' AND $__timeFilter(observed_at) ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 4,
+      "title": "Selected item: observations across markets",
+      "type": "table",
+      "description": "Different source scopes, day buckets and variants must not be treated as synchronized arbitrage quotes.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT scope,source,observed_at,time_precision,metrics,quality FROM nexus.market_observations WHERE namespace=${account:sqlstring} AND item_key IN (${item:sqlstring},'i:'||${item:sqlstring}) ORDER BY observed_at DESC NULLS LAST LIMIT 200",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 5,
+      "title": "Source refresh and API poll health",
+      "type": "table",
+      "description": "Fetch time and upstream Last-Modified are distinct. Empty until API credentials and collection are configured.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT p.region,p.scope,p.fetched_at,p.status,s.source_modified_at,s.auction_count FROM nexus.api_polls p LEFT JOIN nexus.api_snapshots s ON s.id=p.snapshot_id ORDER BY p.fetched_at DESC LIMIT 100",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 6,
+      "title": "Blizzard observed listing supply",
+      "type": "timeseries",
+      "description": "Uses source Last-Modified when present, otherwise fetch time. Counts listings, not sales.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT coalesce(s.source_modified_at,s.fetched_at) AS time,s.scope AS metric,sum(a.quantity) AS value FROM nexus.api_snapshots s JOIN nexus.auction_listings a ON a.snapshot_id=s.id WHERE a.item_id::text=regexp_replace(${item:sqlstring},'^i:','') AND $__timeFilter(s.fetched_at) GROUP BY 1,2 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 7,
+      "title": "Confirmed personal transactions for selected item",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT occurred_at,character,realm,category,subtype,item_name,quantity,invoice_value_copper/10000.0 AS invoice_g FROM nexus.transactions WHERE namespace=${account:sqlstring} AND item_id::text=regexp_replace(${item:sqlstring},'^i:','') AND $__timeFilter(occurred_at) ORDER BY occurred_at DESC LIMIT 200",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 8,
+      "title": "Crafting observation coverage",
+      "type": "table",
+      "description": "Operation previews and outcomes are not completed crafts or realized profits.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT kind,count(*) AS observations,max(observed_at) AS newest FROM nexus.crafting_observations WHERE namespace=${account:sqlstring} GROUP BY kind",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    }
+  ]
+}

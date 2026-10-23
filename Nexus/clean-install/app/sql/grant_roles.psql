@@ -1,0 +1,24 @@
+-- Invoke as migration owner: psql -v importer_role=... -v grafana_role=... -f ...
+-- psql quotes these values as identifiers. No passwords belong in this file.
+GRANT USAGE ON SCHEMA nexus TO :"importer_role", :"grafana_role";
+-- Both new dashboards also query these original tables directly.
+GRANT SELECT(namespace) ON nexus.imports TO :"grafana_role";
+GRANT SELECT(namespace,occurred_at,character,realm,category,subtype,item_name,quantity,item_id,invoice_value_copper)
+ ON nexus.transactions TO :"grafana_role";
+GRANT TEMPORARY ON DATABASE nexus TO :"importer_role";
+GRANT SELECT,INSERT ON nexus.source_snapshots,nexus.snapshot_chunks,nexus.snapshot_sightings,
+ nexus.source_observations,nexus.snapshot_observations,nexus.market_observations,nexus.snapshot_market,
+ nexus.crafting_observations,nexus.snapshot_crafting,nexus.api_snapshots,nexus.api_polls,nexus.auction_listings TO :"importer_role";
+GRANT UPDATE(normalized_version) ON nexus.source_snapshots TO :"importer_role";
+GRANT USAGE,SELECT ON SEQUENCE nexus.source_snapshots_id_seq,nexus.api_snapshots_id_seq,nexus.api_polls_id_seq TO :"importer_role";
+GRANT SELECT ON nexus.warbank_history,nexus.financial_components,nexus.financial_coverage,
+ nexus.source_snapshots,nexus.source_observations,nexus.snapshot_observations,nexus.market_observations,nexus.crafting_observations,
+ nexus.api_polls,nexus.auction_listings TO :"grafana_role";
+GRANT SELECT(id,region,scope,endpoint,fetched_at,source_modified_at,last_modified_header,etag,sha256,auction_count)
+ ON nexus.api_snapshots TO :"grafana_role";
+GRANT SELECT,INSERT ON nexus.item_name_evidence,nexus.inventory_records,nexus.snapshot_inventory,
+ nexus.inventory_snapshot_coverage,nexus.api_item_metadata,nexus.api_worker_status TO :"importer_role";
+GRANT UPDATE ON nexus.inventory_snapshot_coverage,nexus.api_item_metadata,nexus.api_worker_status TO :"importer_role";
+GRANT SELECT ON nexus.item_name_evidence,nexus.item_catalog,nexus.latest_api_snapshots,nexus.latest_auction_prices,
+ nexus.api_worker_status,nexus.api_item_metadata,nexus.inventory_records,nexus.snapshot_inventory,
+ nexus.inventory_snapshot_coverage,nexus.current_inventory,nexus.inventory_totals TO :"grafana_role";

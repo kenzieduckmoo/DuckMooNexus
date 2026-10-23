@@ -1,0 +1,2281 @@
+{
+  "uid": "duckmoo-warband-financials",
+  "title": "DuckMoo Nexus | Warband Financials",
+  "description": "Physical Warbank gold from timestamped transfer ledger balances. Income/expenses exclude bank transfers, deposits held as principal, unresolved mail/trades and unpriced materials. Net flow is not crafting profit.",
+  "schemaVersion": 39,
+  "version": 1,
+  "timezone": "browser",
+  "editable": true,
+  "time": {
+    "from": "now-90d",
+    "to": "now"
+  },
+  "refresh": "5m",
+  "tags": [
+    "DuckMoo Nexus"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "account",
+        "label": "Account",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT namespace FROM nexus.imports UNION SELECT DISTINCT namespace FROM nexus.source_snapshots",
+        "current": {
+          "text": "retail-main-account",
+          "value": "retail-main-account"
+        },
+        "refresh": 1
+      },
+      {
+        "name": "patron_character",
+        "label": "Patron character",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT character_key FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' ORDER BY 1",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "sort": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all",
+          "selected": true
+        }
+      },
+      {
+        "name": "patron_profession",
+        "label": "Patron profession",
+        "type": "query",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "duckmoo-postgres"
+        },
+        "query": "SELECT DISTINCT profession FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) ORDER BY 1",
+        "multi": true,
+        "includeAll": true,
+        "refresh": 1,
+        "sort": 1,
+        "current": {
+          "text": "All",
+          "value": "$__all",
+          "selected": true
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Warbank gold: latest recorded balance",
+      "type": "stat",
+      "description": "Actual bank balance, never combined wallets. Recorded ledger state as of selected end time. See source timestamp below.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "yellow"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT copper/10000.0 AS gold FROM nexus.warbank_history WHERE namespace=${account:sqlstring} AND observed_at<=to_timestamp(${__to}/1000.0) ORDER BY observed_at DESC,source_saved_at DESC,source_ordinal ASC LIMIT 1",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Bank observation timestamp",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT observed_at,source,copper/10000.0 AS gold FROM nexus.warbank_history WHERE namespace=${account:sqlstring} AND observed_at<=to_timestamp(${__to}/1000.0) ORDER BY observed_at DESC,source_saved_at DESC,source_ordinal ASC LIMIT 1",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 3,
+      "title": "Warbank balance over time",
+      "type": "timeseries",
+      "description": "Recorded balances after deposits/withdrawals. Missing intervals stay missing. Same-second records may have uncertain order.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "yellow"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT observed_at AS time,copper/10000.0 AS \"Warbank gold\" FROM nexus.warbank_history WHERE namespace=${account:sqlstring} AND $__timeFilter(observed_at) ORDER BY observed_at",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 17,
+      "title": "Patron-order gold received",
+      "type": "stat",
+      "description": "Selected period. Recorded patron commissions minus order cuts; supplied materials are not deducted.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(net_copper)/10000.0 AS gold FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 18,
+      "title": "Patron orders completed",
+      "type": "stat",
+      "description": "Completed NPC patron orders, excluding public, guild and personal orders.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT count(*) AS orders FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 19,
+      "title": "Patron-order gold over time",
+      "type": "timeseries",
+      "description": "Cumulative across all captured history for the selected characters/professions. Opening balance includes earlier orders. Raw gold after cuts, before supplied-material costs.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 12,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "WITH amounts AS (\n SELECT occurred_at,net_copper FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND gold_complete\n AND occurred_at <= $__timeTo()\n), points AS (\n SELECT $__timeFrom() AS time,coalesce(sum(net_copper),0) AS copper\n FROM amounts WHERE occurred_at < $__timeFrom()\n UNION ALL SELECT occurred_at,sum(net_copper) FROM amounts\n WHERE occurred_at >= $__timeFrom() GROUP BY occurred_at\n UNION ALL SELECT $__timeTo(),0\n), totals AS (\n SELECT time,sum(sum(copper)) OVER (ORDER BY time)/10000.0 AS gold FROM points GROUP BY time\n)\nSELECT time,gold AS \"Patron-order gold\" FROM totals ORDER BY time",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 20,
+      "title": "Daily patron-order gold",
+      "type": "timeseries",
+      "description": "Recorded gold after order cuts, before supplied-material costs.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT date_trunc('day',occurred_at,'America/Chicago') AS time,sum(net_copper)/10000.0 AS gold FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at) GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 24,
+      "title": "Net recorded gold after deposits",
+      "type": "stat",
+      "description": "Selected period: recorded income minus spending and fees, minus posting deposits plus returned deposits. Internal transfers and unresolved mail/trades are excluded. This is cash flow, not profit on sold inventory.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.0001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(net_copper)/10000.0 AS gold FROM nexus.recorded_cash_events WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 25,
+      "title": "Net auction-deposit outflow",
+      "type": "stat",
+      "description": "Posting deposits minus refunds received during the selected period. Includes lost deposits, still-held deposits and unmatched history. A negative value means more deposits were returned than posted in this period.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 38,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 0.0001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT -sum(deposit_movement_copper)/10000.0 AS gold FROM nexus.recorded_cash_events WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 26,
+      "title": "Net recorded gold over time",
+      "type": "timeseries",
+      "description": "Starts at zero at the beginning of the selected period. Includes recorded listing deposits and refunds, alongside income and spending. Inventory purchases count when recorded; this is not a sale-by-sale profit calculation.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 10,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "WITH events AS MATERIALIZED (\n SELECT occurred_at,net_copper FROM nexus.recorded_cash_events WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) AND net_copper IS NOT NULL\n), points AS (\n SELECT $__timeFrom() AS time,0::numeric AS copper\n UNION ALL SELECT occurred_at,sum(net_copper) FROM events GROUP BY occurred_at\n UNION ALL SELECT $__timeTo(),0\n)\nSELECT time,sum(sum(copper)) OVER (ORDER BY time)/10000.0 AS \"Net recorded gold\"\nFROM points GROUP BY time ORDER BY time",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 27,
+      "title": "Auction deposits and outcomes by character",
+      "type": "table",
+      "description": "Failure records do not contain deposit amounts or auction IDs, so failed auctions cannot be assigned an exact gold loss. Posting records are captured from posting requests; refunds are recorded when sale mail is collected.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "character"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "realm"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Realm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posted"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Postings"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "sale_refunds"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Sale refunds"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "expired"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Expired"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cancelled"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Cancelled"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "posted_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Deposits recorded"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "refunded_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Deposits returned"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "outflow_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Net deposit outflow"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "missing_amounts"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Missing amounts"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT character,realm,\n count(*) FILTER(WHERE event_kind='posting') AS posted,\n count(*) FILTER(WHERE event_kind='refund') AS sale_refunds,\n count(*) FILTER(WHERE event_kind='expired') AS expired,\n count(*) FILTER(WHERE event_kind='cancelled') AS cancelled,\n coalesce(sum(deposit_copper) FILTER(WHERE event_kind='posting'),0)/10000.0 AS posted_g,\n coalesce(sum(deposit_copper) FILTER(WHERE event_kind='refund'),0)/10000.0 AS refunded_g,\n (coalesce(sum(deposit_copper) FILTER(WHERE event_kind='posting'),0)\n  -coalesce(sum(deposit_copper) FILTER(WHERE event_kind='refund'),0))/10000.0 AS outflow_g,\n count(*) FILTER(WHERE event_kind IN ('posting','refund') AND deposit_copper IS NULL) AS missing_amounts\n FROM nexus.auction_deposit_events WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) GROUP BY character,realm ORDER BY outflow_g DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 28,
+      "title": "Transfers and external payments",
+      "type": "table",
+      "description": "Money to a character proven to belong to you is a transfer. External payments affect recorded cash flow. Unmatched names remain unresolved until there is evidence.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 24,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gold movement"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT occurred_at AS \"Recorded\",character AS \"Sender\",realm AS \"Realm\",counterparty AS \"Counterparty\",\n cash_copper/10000.0 AS \"Gold movement\",CASE ownership WHEN 'external' THEN 'External payment'\n WHEN 'own_account' THEN 'Same account' WHEN 'own_other_account' THEN 'Another owned account'\n ELSE 'Unresolved' END AS \"Classification\",ownership_evidence AS \"Evidence\"\n FROM nexus.cash_transfer_classification WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) ORDER BY occurred_at DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 21,
+      "title": "Patron gold by character and profession",
+      "type": "table",
+      "description": "Profession comes from a matching captured recipe. Unknown professions remain included.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "character"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "realm"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Realm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "orders"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Orders"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "commission_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Commission"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cuts"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cut"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Gold received"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "incomplete_gold_records"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Missing payment fields"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Completed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "supplied_materials"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Supplied materials"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "unknown_profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Unknown profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "first_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "First order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Latest order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT character,realm,profession,count(*) AS orders,\n sum(gross_copper)/10000.0 AS commission_g,sum(cut_copper)/10000.0 AS cuts_g,\n sum(net_copper)/10000.0 AS received_g,\n count(*) FILTER(WHERE NOT gold_complete) AS incomplete_gold_records\n FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at) GROUP BY 1,2,3 ORDER BY received_g DESC NULLS LAST",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 22,
+      "title": "Patron-order history",
+      "type": "table",
+      "description": "Latest 250 orders in the selected period. Completion time is recorded by Journalator; it is not a mailbox-collection timestamp.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 76,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "character"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "realm"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Realm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "orders"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Orders"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "commission_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Commission"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cuts"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cut"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Gold received"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "incomplete_gold_records"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Missing payment fields"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Completed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "supplied_materials"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Supplied materials"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "unknown_profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Unknown profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "first_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "First order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Latest order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT occurred_at AS completed_at,character,realm,profession,item_name,\n gross_copper/10000.0 AS commission_g,cut_copper/10000.0 AS cut_g,\n net_copper/10000.0 AS received_g,supplied_materials FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at)\n ORDER BY occurred_at DESC,id LIMIT 250",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 23,
+      "title": "Patron data coverage",
+      "type": "table",
+      "description": "Missing payment fields are excluded from gold totals. Item/currency rewards are not assigned a gold value.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 84,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "character"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Character"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "realm"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Realm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "orders"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Orders"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "commission_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Commission"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cuts"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Order cut"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Gold received"
+              },
+              {
+                "id": "unit",
+                "value": "suffix:g"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "incomplete_gold_records"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Missing payment fields"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "completed_at"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Completed"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "item_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Item"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "supplied_materials"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Supplied materials"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "unknown_profession"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Unknown profession"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "first_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "First order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latest_order"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Latest order"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "received_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cut_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cuts_g"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT count(*) AS orders,count(*) FILTER(WHERE profession='Unknown profession') AS unknown_profession,\n count(*) FILTER(WHERE NOT gold_complete) AS incomplete_gold_records,\n min(occurred_at) AS first_order,max(occurred_at) AS latest_order FROM nexus.crafting_order_financials WHERE namespace=${account:sqlstring} AND order_kind='Patron' AND character_key IN (${patron_character:sqlstring}) AND profession IN (${patron_profession:sqlstring}) AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 4,
+      "title": "Recorded income",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 92,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(income_copper)/10000.0 AS gold FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Recorded expenses",
+      "type": "stat",
+      "description": "Does not include unmatched lost auction deposits or unpriced crafting materials.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 92,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(expense_copper)/10000.0 AS gold FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Net recorded flow",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 97,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "text",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0.0001
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(income_copper-expense_copper)/10000.0 AS gold FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at)",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Auction commission fees",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 97,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT sum(expense_copper)/10000.0 AS gold FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) AND component='auction sale'",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 8,
+      "title": "Daily income and expenses",
+      "type": "timeseries",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 102,
+        "w": 24,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:g",
+          "decimals": 2,
+          "noValue": "No recorded data"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "income"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "expenses"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT date_trunc('day',occurred_at,'America/Chicago') AS time,sum(income_copper)/10000.0 AS income,-sum(expense_copper)/10000.0 AS expenses FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) GROUP BY 1 ORDER BY 1",
+          "format": "time_series",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 9,
+      "title": "Income and expenses by source",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 110,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT component,sum(income_copper)/10000.0 AS income_g,sum(expense_copper)/10000.0 AS expense_g,sum(income_copper-expense_copper)/10000.0 AS net_g FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) GROUP BY 1 ORDER BY net_g DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 10,
+      "title": "All tracked characters: financial activity",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 110,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT character,realm,sum(income_copper)/10000.0 AS income_g,sum(expense_copper)/10000.0 AS expense_g FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) GROUP BY 1,2 ORDER BY income_g DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 11,
+      "title": "Crafting orders, including patron orders",
+      "type": "table",
+      "description": "Order type retained as source enum. Commission net excludes own reagent costs, so it is not profit.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 118,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT character,realm,order_type,count(*) AS orders,sum(income_copper)/10000.0 AS tips_g,sum(expense_copper)/10000.0 AS cuts_g,count(*) FILTER(WHERE has_crafter_materials) AS orders_with_own_materials FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) AND category='Fulfilling' GROUP BY 1,2,3",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 12,
+      "title": "Auction deposit principal and unresolved money",
+      "type": "table",
+      "description": "Principal returned is not new income. Failed/cancelled deposits are not matched to invoices yet.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 118,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT component,sum(internal_transfer_copper)/10000.0 AS deposit_cash_g,sum(uncertain_copper)/10000.0 AS unresolved_g FROM nexus.cash_financial_components WHERE namespace=${account:sqlstring} AND $__timeFilter(occurred_at) GROUP BY 1 HAVING sum(internal_transfer_copper)<>0 OR sum(uncertain_copper)<>0",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 13,
+      "title": "Category coverage and incomplete attribution",
+      "type": "table",
+      "description": "Coverage spans all imported history. Unclassified records are never silently converted into income.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 126,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT * FROM nexus.financial_coverage WHERE namespace=${account:sqlstring} ORDER BY records DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 14,
+      "title": "Cached character balances, separately",
+      "type": "table",
+      "description": "Latest preserved file for each source and character. File save time is shown separately from source observation time. Cached balances are not added to Warbank gold.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 126,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT DISTINCT ON(o.source,o.entity) o.source,o.entity,o.copper/10000.0 AS gold,o.observed_at,o.time_precision,o.quality,s.source_saved_at AS snapshot_file_saved_at FROM nexus.source_observations o JOIN nexus.snapshot_observations l ON l.observation_id=o.id JOIN nexus.source_snapshots s ON s.id=l.snapshot_id WHERE o.namespace=${account:sqlstring} AND o.kind='character_balance' ORDER BY o.source,o.entity,s.source_saved_at DESC NULLS LAST,s.captured_at DESC,s.id DESC",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 15,
+      "title": "Other bank observations and source quality",
+      "type": "table",
+      "description": "Includes timestamp-free Syndicator cache and legacy samples; excluded from primary balance history.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 134,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT source,observed_at,copper/10000.0 AS gold,quality FROM nexus.source_observations WHERE namespace=${account:sqlstring} AND kind='warbank_balance' AND quality<>'recorded_after_transfer' ORDER BY observed_at DESC NULLS LAST",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    },
+    {
+      "id": 16,
+      "title": "Snapshot preservation and normalization",
+      "type": "table",
+      "description": "",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "duckmoo-postgres"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 134,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "noValue": "No recorded data"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "duckmoo-postgres"
+          },
+          "rawSql": "SELECT source,count(*) AS snapshots,max(source_saved_at) AS latest_file_save,max(imported_at) AS latest_archive,max(normalized_version) AS normalized_version FROM nexus.source_snapshots WHERE namespace=${account:sqlstring} GROUP BY 1 ORDER BY 1",
+          "format": "table",
+          "rawQuery": true
+        }
+      ],
+      "options": {}
+    }
+  ]
+}

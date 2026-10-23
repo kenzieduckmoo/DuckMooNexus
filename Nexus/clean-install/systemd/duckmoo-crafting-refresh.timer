@@ -1,0 +1,8 @@
+[Unit]
+Description=Keep Crafting Desk current with collected Nexus sources
+[Timer]
+OnBootSec=3min
+OnUnitInactiveSec=5min
+Persistent=true
+[Install]
+WantedBy=timers.target

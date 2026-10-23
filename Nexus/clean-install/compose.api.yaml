@@ -1,0 +1,13 @@
+services:
+  api:
+    image: duckmoo-nexus-clean-ingest
+    entrypoint: ["python", "api_worker.py"]
+    command: ["--region", "us", "--connected-realms", "11,57,61,63,76,99,104,162,1426,3675,3685,3721,3726", "--archive", "/api-archive"]
+    env_file: [./api.env]
+    environment:
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD}@postgres/nexus
+    volumes:
+      - /var/lib/duckmoo-nexus-api:/api-archive
+    depends_on:
+      postgres:
+        condition: service_healthy

@@ -1,0 +1,12 @@
+## Interface: 120005, 120007, 120100
+## Title: DuckMoo Services: Warband Planner
+## Notes: Quick capture and gentle reminders across your recorded characters.
+## Author: DuckMoo Media
+## Category: DuckMoo Media
+## Version: 0.4.0
+## SavedVariables: DuckMooWarbandDB
+## OptionalDeps: DuckMooFolio, DuckMooPlanner
+Model.lua
+Core.lua
+Activity.lua
+UI.lua

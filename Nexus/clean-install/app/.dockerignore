@@ -1,0 +1,6 @@
+__pycache__
+*.pyc
+.env
+*.lua.bak
+Journalator.lua
+tests/private*
