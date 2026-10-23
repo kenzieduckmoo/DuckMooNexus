@@ -3,7 +3,7 @@ import re
 from collections.abc import Mapping
 
 OMNI_SOURCE='DuckMooOmniCapture.lua'
-OMNI_VERSION='0.1.0-omni1'
+OMNI_VERSION='0.1.2-omni2'
 SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge','inventory','reputations'}
 
 def omni_rows(data):
@@ -16,15 +16,35 @@ def omni_rows(data):
         if not c.get('name') or not c.get('realm'):raise ValueError('Missing Omni character name/realm')
         sections=c.get('sections',{})
         if not isinstance(sections,Mapping):raise ValueError('Malformed Omni sections')
+        events=c.get('events',{})
+        entries=list(events.values()) if isinstance(events,Mapping) else events if isinstance(events,list) else None
+        if entries is None:raise ValueError('Malformed Omni event journal')
+        # Versions 0.1.0/1 scanned during PLAYER_LOGOUT after APIs were cleared.
+        # Only repair a profile that exactly matches a zero-valued session-end.
+        # Raw archives and the original event remain intact; recovered values keep
+        # their actual earlier timestamp, never the later logout time.
+        profile=sections.get('profile',{})
+        body=profile.get('data',{})
+        terminal=any(isinstance(e,Mapping) and e.get('kind')=='session_end' and e.get('at')==profile.get('observedAt') and e.get('data')==body for e in entries)
+        shutdown=body.get('ilvl')==0 and body.get('money')==0 and terminal
+        if shutdown:
+            sections={k:dict(v) for k,v in sections.items()}
+            candidates=[e for e in entries if isinstance(e,Mapping) and e.get('kind') in ('session_start','session_end') and isinstance(e.get('data'),Mapping) and (e['data'].get('ilvl',0)>0 or e['data'].get('money',0)>0) and e.get('at',0)<profile.get('observedAt',0)]
+            if candidates:
+                earlier=max(candidates,key=lambda e:e['at'])
+                sections['profile']={**profile,'data':dict(earlier['data']),'observedAt':earlier['at'],'status':'partial','detail':'Recovered earlier session observation; legacy logout cleared live APIs. Original raw capture retained.','recoveredFromEvent':earlier['id'],'discardedLogoutAt':profile.get('observedAt')}
+            else:
+                sections['profile']={**profile,'data':{k:v for k,v in body.items() if k not in ('ilvl','avgIlvl','money','health')},'status':'partial','detail':'Legacy logout cleared live APIs; zero wallet and item-level readings are unknown.'}
+            for key in ('equipment','quests'):
+                sec=sections.get(key)
+                if sec and sec.get('observedAt')==profile.get('observedAt'):
+                    sections[key]={**sec,'data':None,'status':'unavailable','detail':'Legacy logout read after live APIs cleared; awaiting an in-world observation.'}
         identity={k:c.get(k) for k in ('guid','name','realm','lastSeen','sequence','droppedEvents')}
         yield guid,'omni_identity','identity',c.get('lastSeen'),'character_seen',identity
         for key,section in sections.items():
             if key not in SECTIONS or not isinstance(section,Mapping):raise ValueError('Unsupported Omni section')
             if section.get('status') not in ('captured','partial','unavailable'):raise ValueError('Unknown Omni coverage')
             yield guid,'omni_section',key,section.get('observedAt'),'section_seen',dict(section)
-        events=c.get('events',{})
-        entries=events.values() if isinstance(events,Mapping) else events if isinstance(events,list) else None
-        if entries is None:raise ValueError('Malformed Omni event journal')
         for event in entries:
             if not isinstance(event,Mapping) or type(event.get('id')) is not int or event['id']<=0 or type(event.get('at')) is not int:raise ValueError('Malformed Omni event')
             if event.get('kind') not in ('session_start','session_end','level','quest_completed','loot','death','achievement','encounter'):raise ValueError('Unsupported Omni event')
@@ -47,5 +67,7 @@ def normalize_omni(conn,data,namespace,snapshot_id):
                 count+=1
         cur.execute('INSERT INTO nexus.character_records SELECT DISTINCT ON(id) * FROM omni_stage ON CONFLICT DO NOTHING')
         inserted=cur.rowcount
+        cur.execute('DELETE FROM nexus.snapshot_characters l USING nexus.character_records r WHERE l.snapshot_id=%s AND l.observation_id=r.id AND r.source=%s',(snapshot_id,OMNI_SOURCE))
         cur.execute('INSERT INTO nexus.snapshot_characters SELECT %s,id FROM omni_stage GROUP BY id ON CONFLICT DO NOTHING',(snapshot_id,))
     return inserted,count
+

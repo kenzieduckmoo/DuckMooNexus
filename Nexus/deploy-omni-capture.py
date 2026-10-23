@@ -9,7 +9,7 @@ with tarfile.open('/home/kenzieduckmoo/nexus-omni-capture.tar.gz') as archive:
    dest=b/entry.name;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(old,dest)
  archive.extractall(r,filter='data')
 base=['docker','compose','--ansi','never','--project-directory',str(r)]
-sql=(r/'app/sql/015_omni_capture.sql').read_text()+'\nGRANT SELECT ON nexus.current_omni_records TO nexus_web;'
+sql=(r/'app/sql/015_omni_capture.sql').read_text()+(r/'app/sql/016_omni_logout_recovery.sql').read_text()+'\nGRANT SELECT ON nexus.current_omni_records TO nexus_web;'
 subprocess.run(base+['exec','-T','postgres','psql','-U','nexus','-d','nexus','-v','ON_ERROR_STOP=1','-q'],input=sql,text=True,check=True)
 subprocess.run(base+['build','ingest'],stdin=subprocess.DEVNULL,check=True)
 web=base+['-f',str(r/'compose.yaml'),'-f',str(r/'compose.web.yaml')]

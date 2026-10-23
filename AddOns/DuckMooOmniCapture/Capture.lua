@@ -158,7 +158,7 @@ function O.Knowledge()
     return all,"partial","Only profession specializations opened by this character; no automatic UI opening"
 end
 function O.Scan(reason,only)
-    if not O.Character() then return end
+    if O.shuttingDown or O.loading or not O.Character() then return end
     if O.Call(InCombatLockdown) then O.pending=true;return end
     local handlers={profile=O.Profile,currencies=O.Currencies,vault=O.Vault,lockouts=O.Lockouts,keystone=O.Keystone,equipment=O.Equipment,quests=O.Quests,knowledge=O.Knowledge,inventory=O.Inventory,reputations=O.Reputations}
     for key,fn in pairs(handlers) do
@@ -166,7 +166,8 @@ function O.Scan(reason,only)
             O.readLimited=false
             local ok,body,status,detail=pcall(fn)
             if O.readLimited then status="partial" end
-            O.Store(key,ok and body or nil,ok and (status or "captured") or "unavailable",ok and detail or "API read failed; previous observation retained")
+            if ok then O.Store(key,body,status or "captured",detail)
+            else O.Store(key,nil,"unavailable","API read failed; previous observation retained") end
         end
     end
     O.db.lastCapture=GetServerTime();O.db.version=O.version

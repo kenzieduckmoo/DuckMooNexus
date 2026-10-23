@@ -3,6 +3,7 @@ local frame=CreateFrame("Frame")
 local scheduled=false
 local dirty,full={},false
 function O.Schedule(keys)
+    if O.shuttingDown or O.loading then return end
     if not keys then full=true else for key in string.gmatch(keys,"%S+") do dirty[key]=true end end
     if scheduled then return end
     scheduled=true
@@ -15,10 +16,18 @@ frame:SetScript("OnEvent",function(_,event,...)
         return
     end
     if not O.db or O.blocked then return end
-    if event=="PLAYER_LOGIN" then
+    if event=="PLAYER_LEAVING_WORLD" then O.loading=true;return
+    elseif event=="PLAYER_ENTERING_WORLD" then O.loading=false;O.Schedule();return
+    elseif O.shuttingDown then return
+    elseif event=="PLAYER_LOGIN" then
         O.Event("session_start",O.Profile());O.Call(RequestRaidInfo);O.Call(C_MythicPlus and C_MythicPlus.RequestMapInfo);O.Call(C_WeeklyRewards and C_WeeklyRewards.OnUIInteract);O.Schedule()
     elseif event=="PLAYER_LOGOUT" then
-        O.Event("session_end",O.Profile());O.Scan("logout")
+        -- Logout APIs can already report zero money/item level and empty bags.
+        -- Retain the last in-world sections; the event time is the session end,
+        -- while profileObservedAt identifies the older cached observation.
+        O.shuttingDown=true
+        local c=O.Character();local profile=c and c.sections.profile
+        O.Event("session_end",{profile=profile and profile.data,profileObservedAt=profile and profile.observedAt,cached=true})
     elseif event=="PLAYER_LEVEL_UP" then
         O.Event("level",{level=O.Safe((...))});O.Schedule("profile")
     elseif event=="QUEST_TURNED_IN" then
@@ -44,7 +53,7 @@ frame:SetScript("OnEvent",function(_,event,...)
         O.Schedule(sections[event])
     end
 end)
-for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","PLAYER_LOGOUT","PLAYER_LEVEL_UP","QUEST_TURNED_IN","CHAT_MSG_LOOT","PLAYER_DEAD","ACHIEVEMENT_EARNED","ENCOUNTER_END"}) do pcall(frame.RegisterEvent,frame,event) end
+for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","PLAYER_LOGOUT","PLAYER_LEAVING_WORLD","PLAYER_LEVEL_UP","QUEST_TURNED_IN","CHAT_MSG_LOOT","PLAYER_DEAD","ACHIEVEMENT_EARNED","ENCOUNTER_END"}) do pcall(frame.RegisterEvent,frame,event) end
 for event in pairs(refresh) do pcall(frame.RegisterEvent,frame,event) end
 SLASH_DUCKMOOOMNI1="/dmomni"
 SlashCmdList.DUCKMOOOMNI=function(text)

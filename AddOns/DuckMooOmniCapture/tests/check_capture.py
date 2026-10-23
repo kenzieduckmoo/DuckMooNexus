@@ -62,6 +62,14 @@ local scanned={};local original=O.Scan;O.Scan=function(_,keys) scanned=keys or {
 FRAME.event(FRAME,'PLAYER_MONEY');FRAME.event(FRAME,'CURRENCY_DISPLAY_UPDATE',3310)
 assert(#timers==1);timers[1]();assert(scanned.profile and scanned.currencies and not scanned.quests)
 O.Scan=original
+-- Reproduce real client teardown: every handler would now erase its section.
+assert(c.sections.equipment.detail==nil)
+local previous=c.sections.profile.data;local at=c.sections.profile.observedAt
+O.Schedule('profile');O.Profile=function() return {ilvl=0,money=0} end
+FRAME.event(FRAME,'PLAYER_LOGOUT');timers[#timers]()
+assert(c.sections.profile.data==previous and c.sections.profile.observedAt==at)
+assert(c.events[#c.events].kind=='session_end' and c.events[#c.events].data.cached==true)
+assert(c.events[#c.events].data.profileObservedAt==at)
 ''')
 
 def plain(v):
@@ -77,6 +85,12 @@ assert any(r[2]=='currencies' and r[5]['data'][3310]['name']=='Named currency fi
 try:list(omni_rows({'DuckMooOmniCaptureDB':{'schema':999}}))
 except ValueError:pass
 else:raise AssertionError('Unknown schema accepted')
+legacy={'schema':1,'version':'0.1.1','characters':{'Player-104-ABC':{'guid':'Player-104-ABC','name':'Fixture','realm':'Fixture','sections':{'profile':{'status':'captured','observedAt':200,'data':{'ilvl':0,'money':0}},'quests':{'status':'captured','observedAt':200,'data':{}}},'events':[{'id':1,'kind':'session_start','at':100,'data':{'ilvl':123,'money':500}},{'id':2,'kind':'session_end','at':200,'data':{'ilvl':0,'money':0}}]}}}
+recovered=list(omni_rows({'DuckMooOmniCaptureDB':legacy}))
+profile=next(r for r in recovered if r[2]=='profile')
+assert profile[3]==100 and profile[5]['data']['ilvl']==123 and profile[5]['recoveredFromEvent']==1
+assert legacy['characters']['Player-104-ABC']['sections']['profile']['data']['ilvl']==0
+assert next(r for r in recovered if r[2]=='quests')[5]['data'] is None
 print('Lua51 capture and import contract passed, including empty/unavailable bag reads, bank exclusion and labeled renown/warband reputation.')
 
 if '--fixture' in sys.argv:

@@ -1,4 +1,4 @@
-# DuckMoo Omni Capture 0.1.1 — Retail preview
+# DuckMoo Omni Capture 0.1.1 â€” Retail preview
 
 Independent from DuckMooCapture, DuckMooFolio, WarbandNexus and WoWthing Collector. No addon dependency. Uses its own `DuckMooOmniCaptureDB`, settings and capture lifecycle. Category: DuckMoo Media.
 
@@ -31,3 +31,6 @@ Server source adapter archives the complete saved file first, then normalizes id
 Currency icon IDs are preserved; resolving every icon into a website image is a separate enrichment step. Other future coverage includes bank storage, deeper collections/weekly activities, richer session/dungeon details and reliable journal rotation. Existing collectors remain useful sources for those areas.
 
 Retail only in this preview. Forever compatibility and its in-game verification wait until November 4. This release has Lua 5.1 mock and server adapter checks; actual in-game capture/reload/upload behavior has not yet been verified.
+
+### 0.1.2 logout correction
+Real October 23 captures showed that PLAYER_LOGOUT APIs can return zero wallet/item level and empty equipment/quests. Logout now journals the end time with the last cached profile and its own observation timestamp, and stops scans during shutdown/loading. Successful scans no longer receive an erroneous API-failure detail. Nexus normalization recovers affected legacy profiles from earlier retained session events, retaining their original observation time and labeling the recovery. Raw files and events are preserved. Empty legacy logout equipment/quests are unknown rather than proof of owning/completing nothing. Reload the addon to load the correction; its next in-world capture remains to be verified.
