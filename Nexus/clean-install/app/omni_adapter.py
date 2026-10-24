@@ -3,10 +3,10 @@ import re
 from collections.abc import Mapping
 
 OMNI_SOURCE='DuckMooOmniCapture.lua'
-OMNI_VERSION='0.1.2-omni2'
+OMNI_VERSION='0.1.3-omni3'
 SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge','inventory','reputations'}
 
-def omni_rows(data):
+def omni_rows(data,recovered_profiles=None):
     db=data.get('DuckMooOmniCaptureDB')
     if not isinstance(db,Mapping) or db.get('schema')!=1:raise ValueError('Unsupported Omni Capture schema')
     chars=db.get('characters',{})
@@ -26,11 +26,15 @@ def omni_rows(data):
         profile=sections.get('profile',{})
         body=profile.get('data',{})
         terminal=any(isinstance(e,Mapping) and e.get('kind')=='session_end' and e.get('at')==profile.get('observedAt') and e.get('data')==body for e in entries)
-        shutdown=body.get('ilvl')==0 and body.get('money')==0 and terminal
+        prior=(recovered_profiles or {}).get(guid)
+        recovered=prior if prior and prior.get('discardedLogoutAt')==profile.get('observedAt') else None
+        shutdown=body.get('ilvl')==0 and body.get('money')==0 and (terminal or recovered is not None)
         if shutdown:
             sections={k:dict(v) for k,v in sections.items()}
             candidates=[e for e in entries if isinstance(e,Mapping) and e.get('kind') in ('session_start','session_end') and isinstance(e.get('data'),Mapping) and (e['data'].get('ilvl',0)>0 or e['data'].get('money',0)>0) and e.get('at',0)<profile.get('observedAt',0)]
-            if candidates:
+            if recovered is not None:
+                sections['profile']=dict(recovered)
+            elif candidates:
                 earlier=max(candidates,key=lambda e:e['at'])
                 sections['profile']={**profile,'data':dict(earlier['data']),'observedAt':earlier['at'],'status':'partial','detail':'Recovered earlier session observation; legacy logout cleared live APIs. Original raw capture retained.','recoveredFromEvent':earlier['id'],'discardedLogoutAt':profile.get('observedAt')}
             else:
@@ -57,9 +61,20 @@ def normalize_omni(conn,data,namespace,snapshot_id):
     from financials import canonical
     count=0
     with conn.cursor() as cur:
+        # Rotation removes archived events from the current addon queue, not
+        # their history in PostgreSQL. Keep an already-proven legacy recovery
+        # when an unvisited character still has that exact old logout section.
+        recoveries={}
+        for guid,c in data.get('DuckMooOmniCaptureDB',{}).get('characters',{}).items():
+            profile=c.get('sections',{}).get('profile',{})
+            body=profile.get('data') or {}
+            if body.get('ilvl')==0 and body.get('money')==0 and profile.get('observedAt'):
+                cur.execute("SELECT payload FROM nexus.character_records WHERE namespace=%s AND source=%s AND character_guid=%s AND record_kind='omni_section' AND record_key='profile' AND payload->>'discardedLogoutAt'=%s AND payload ? 'recoveredFromEvent' ORDER BY observed_at DESC,id DESC LIMIT 1",(namespace,OMNI_SOURCE,guid,str(profile['observedAt'])))
+                prior=cur.fetchone()
+                if prior:recoveries[guid]=prior[0]
         cur.execute('CREATE TEMP TABLE omni_stage (LIKE nexus.character_records) ON COMMIT DROP')
         with cur.copy('COPY omni_stage FROM STDIN') as out:
-            for guid,kind,key,when,precision,payload in omni_rows(data):
+            for guid,kind,key,when,precision,payload in omni_rows(data,recoveries):
                 if when is not None and (type(when) is not int or not 0<when<4102444800):raise ValueError('Invalid Omni observation timestamp')
                 payload=json_data(payload)
                 identity=canonical([namespace,OMNI_SOURCE,guid,kind,key,when,payload])
@@ -70,4 +85,3 @@ def normalize_omni(conn,data,namespace,snapshot_id):
         cur.execute('DELETE FROM nexus.snapshot_characters l USING nexus.character_records r WHERE l.snapshot_id=%s AND l.observation_id=r.id AND r.source=%s',(snapshot_id,OMNI_SOURCE))
         cur.execute('INSERT INTO nexus.snapshot_characters SELECT %s,id FROM omni_stage GROUP BY id ON CONFLICT DO NOTHING',(snapshot_id,))
     return inserted,count
-

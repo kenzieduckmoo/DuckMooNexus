@@ -18,7 +18,7 @@ export async function roster(){
  return base;
 }
 export async function character(guid:string){
- const [profiles,api,apiStatus,inventory,wallets,captures,extras,omniRows]=await Promise.all([
+ const [profiles,api,apiStatus,inventory,wallets,captures,extras,omniRows,questEvents]=await Promise.all([
  rows(`SELECT source,record_kind,record_key,observed_at,source_saved_at,captured_at,payload FROM nexus.current_character_records WHERE namespace=$1 AND character_guid=$2 ORDER BY source,record_kind,record_key`,[account,guid]),
  rows(`SELECT DISTINCT ON(endpoint) endpoint,payload,last_checked_at,first_fetched_at,response_modified_at,profile_observed_at FROM nexus.character_api_documents WHERE namespace=$1 AND character_guid=$2 AND status=200 ORDER BY endpoint,last_checked_at DESC,id DESC`,[account,guid]),
  rows(`SELECT endpoint,status,last_checked_at,response_modified_at FROM nexus.latest_character_api WHERE namespace=$1 AND character_guid=$2 ORDER BY endpoint`,[account,guid]),
@@ -31,7 +31,8 @@ export async function character(guid:string){
  rows(`WITH latest AS (SELECT id FROM nexus.source_snapshots WHERE namespace=$1 AND source='DuckMooCapture.lua' AND normalized_version IS NOT NULL ORDER BY source_saved_at DESC NULLS LAST,captured_at DESC,id DESC LIMIT 1)
  SELECT o.kind,count(*) AS count,max(o.observed_at) AS observed_at FROM latest s JOIN nexus.snapshot_crafting l ON l.snapshot_id=s.id JOIN nexus.crafting_observations o ON o.id=l.observation_id WHERE o.character_guid=$2 GROUP BY o.kind`,[account,guid]),
  rows(`SELECT source,source_saved_at,observed_at,payload FROM nexus.current_character_extras WHERE namespace=$1 AND character_guid=$2 ORDER BY source`,[account,guid]),
- rows(`SELECT record_kind,record_key,payload,observed_at FROM nexus.current_omni_records WHERE namespace=$1 AND character_guid=$2 AND record_kind<>'omni_event'`,[account,guid])
+ rows(`SELECT record_kind,record_key,payload,observed_at FROM nexus.current_omni_records WHERE namespace=$1 AND character_guid=$2 AND record_kind<>'omni_event'`,[account,guid]),
+ rows(`SELECT id,observed_at,payload FROM nexus.character_records WHERE namespace=$1 AND character_guid=$2 AND source='DuckMooOmniCapture.lua' AND record_kind='omni_event' AND payload->>'kind'='quest_completed' ORDER BY observed_at DESC,id DESC LIMIT 40`,[account,guid])
  ]);
  const folio=profiles.find(r=>r.source==='DuckMooFolio.lua'&&r.record_kind==='profile'),planner=profiles.find(r=>r.source==='DuckMooPlanner.lua'&&r.record_kind==='profile');
  const omni=Object.fromEntries(omniRows.filter(r=>r.record_kind==='omni_section').map(r=>[r.record_key,r.payload]));const own=omni.profile?.data??{},ownAt=omni.profile?.observedAt?new Date(omni.profile.observedAt*1000).toISOString():null;
@@ -47,7 +48,7 @@ export async function character(guid:string){
  const equipment=apiMap.equipment?.payload.equipped_items??[],ids=[...new Set([...equipment.map((e:any)=>e.item?.id),...ownItems.map((r:any)=>r.itemID)].filter(Boolean))];
  const icons=ids.length?await rows(`SELECT item_id,payload->>'_nexus_icon' AS icon FROM nexus.api_item_metadata WHERE region='us' AND item_id=ANY($1::bigint[])`,[ids]):[];
  const iconMap=Object.fromEntries(icons.map(i=>[i.item_id,i.icon]));
- return {guid,merged,fields,omni,omniIdentity:omniRows.find(r=>r.record_kind==='omni_identity')?.payload??null,omniObservedAt:ownAt,folio:f,planner:planner?.payload??{},profiles,api:apiMap,apiStatus,apiObservedAt:apiAt,folioObservedAt:folioAt,
+ return {guid,merged,fields,omni,questEvents,omniIdentity:omniRows.find(r=>r.record_kind==='omni_identity')?.payload??null,omniObservedAt:ownAt,folio:f,planner:planner?.payload??{},profiles,api:apiMap,apiStatus,apiObservedAt:apiAt,folioObservedAt:folioAt,
  omniBagItems:ownItems.map((r:any)=>({...r,icon:iconMap[r.itemID]??null})),
  equipment:equipment.map((e:any)=>({...e,icon:iconMap[e.item?.id]??null})),inventory,wallets,captures,extras,
  professions:profiles.filter(r=>r.record_kind==='profession'),reputations:profiles.filter(r=>r.record_kind==='reputation'),concentration:profiles.filter(r=>r.record_kind==='concentration')};

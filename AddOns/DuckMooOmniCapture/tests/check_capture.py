@@ -94,6 +94,11 @@ assert next(r for r in recovered if r[2]=='quests')[5]['data'] is None
 # Loading the new addon on one character does not repair the others in-place.
 legacy['version']='0.1.2'
 assert next(r for r in omni_rows({'DuckMooOmniCaptureDB':legacy}) if r[2]=='profile')[5]['recoveredFromEvent']==1
+# Archived session events can leave the queue while an unvisited legacy profile
+# remains. Reuse only the earlier recovery for that same logout timestamp.
+legacy['characters']['Player-104-ABC']['events']=[]
+assert next(r for r in omni_rows({'DuckMooOmniCaptureDB':legacy},{'Player-104-ABC':profile[5]}) if r[2]=='profile')[5]['data']['ilvl']==123
+assert next(r for r in omni_rows({'DuckMooOmniCaptureDB':legacy},{'Player-104-ABC':{**profile[5],'discardedLogoutAt':199}}) if r[2]=='profile')[5]['data']['ilvl']==0
 print('Lua51 capture and import contract passed, including empty/unavailable bag reads, bank exclusion and labeled renown/warband reputation.')
 
 if '--fixture' in sys.argv:

@@ -4,7 +4,7 @@
 
 - Native Nexus website on the private server: overview, item-name auction search, dedicated character sheets, Crafting Desk and financial workspace. Grafana remains available separately.
 - PostgreSQL source archival and source-specific adapters; scheduled auction/public-character API imports and Windows SavedVariables sync.
-- Character pages: equipment/artwork, inventory, professions, history, visual vault/weekly progress, searchable completed quests and encounters, currencies, PvP and source evidence.
+- Character pages: equipment/artwork, inventory, professions, history, visual vault/weekly progress, completed quest chronicle with API/Omni source choice, title search and recorded turn-ins, searchable encounters, currencies, PvP and source evidence.
 - Financials: actual warbank observations and growth, recorded cash movement, raw patron-order gold with profession filters and graphs, financial activity and auction-deposit movement.
 - Nexus-hosted Crafting Desk and internal calculation worker, with automatic source refresh and preserved saved choices.
 - Independent `DuckMooOmniCapture` 0.1.3 Retail preview installed; source adapter, automatic sync allowlist and website integration deployed. It captures named currencies, vault, lockouts, owned keys, equipment, basic character details, completed quest IDs, naturally opened knowledge and lightweight adventure events. It does not depend on the crafting scanner or third-party collectors.
