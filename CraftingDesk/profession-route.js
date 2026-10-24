@@ -21,7 +21,7 @@ function routeAlternatives(data,c,g,names,skill,target,now=Date.now()/1000){
 }
 function professionRoute(data,c,g,options={}){
  const h=routeHelpers,imported=c.professions?.find(p=>p.name==='Midnight '+g.name)?.rank??null,skill=Math.max(1,Math.min(100,Number(options.skill??imported??1))),steps=[],issues=[],choices=[];
- function add(from,to,name,count,note='',extra={}){if(skill>=to)return;steps.push({id:from+':'+name+':'+steps.length,from:Math.max(skill,from),to,name,count,note,...extra});}
+ function add(from,to,name,count,note='',extra={}){if(skill>=to)return;steps.push({id:from+':'+name+':'+(extra.chosen?'repeat':extra.first?'first':'craft'),from:Math.max(skill,from),to,name,count,note,...extra});}
  function gate(from,to,name,note,requirements){add(from,to,name,null,note,{gate:true,requirements});}
  function trainers(from,to,max,exclude=[]){const list=h.guideTrainerRecipes(data,c,{...g,early:max}).filter(r=>!exclude.includes(r.name));if(!list.length)issues.push('Missing trainer recipe list for '+from+'–'+to);for(const r of list)add(from,to,r.name,1,'Learn at skill '+r.skill+'. '+(r.firstCraft===true?'First-craft bonus recorded as available.':r.firstCraft===false?'No first-craft bonus recorded; craft only if it still grants skill.':'Confirm first-craft bonus and skill gains in game.'),{first:true});}
  function choose(from,to,names,counts,note){

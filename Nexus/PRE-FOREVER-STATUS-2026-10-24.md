@@ -31,7 +31,7 @@ Prepared ZIPs are under `releases/curseforge-ready-2026-10-24/`. They are upload
 - Actual laptop save/page-refresh confirmation. Hosted saved-choice persistence and the page loading were checked, but those are separate evidence.
 - Weekday advice needs more automatically accumulated history. A waiting evidence gate is not unfinished implementation.
 - Forever-specific client access and capture validation wait until November 4. Hardcore character-life coverage must be ready before the expected January/February start; its exact date remains unannounced in the project brief.
-- Deeper profession-guide optimization remains paused. Larger collector coverage and other future ideas are not silently claimed complete by this checkpoint.
+- Profession guides resumed at the user’s request and the native workflow is deployed; see `PROFESSION-GUIDES-2026-10-24.md`. Unknown game observations and larger future collector coverage remain explicit evidence gates.
 
 This is a usable pre-Forever checkpoint with explicit remaining checks, not an RTM declaration for every addon or a claim that the entire long-term Nexus vision is finished.
 

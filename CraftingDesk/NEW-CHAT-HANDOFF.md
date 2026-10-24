@@ -1,3 +1,7 @@
+# October 24 update
+
+The native Nexus guides are deployed. The user explicitly resumed their development; the old optimization pause is superseded. See ../Nexus/PROFESSION-GUIDES-2026-10-24.md and EXECUTION-LEDGER.md for the current scope and evidence. Capture is now 0.9.0; the older notes below are historical.
+
 # Crafting Desk — current handoff
 
 Updated October 23, 2026. Read EXECUTION-LEDGER.md first for R1–R13 reconciliation.

@@ -11,7 +11,7 @@ class DocumentConflict(ValueError):pass
 def read_document_versioned(key):
     with psycopg.connect(os.environ['DATABASE_URL']) as conn:
         row=conn.execute('SELECT payload,updated_at FROM nexus.crafting_documents WHERE namespace=%s AND key=%s',(ACCOUNT,key)).fetchone()
-    return (row[0],row[1].isoformat()) if row else ({'version':1,'setups':[],**({'completed':[]} if key=='plan' else {})},'missing')
+    return (row[0],row[1].isoformat()) if row else (({'version':1,'profiles':{}} if key=='guides' else {'version':1,'setups':[],**({'completed':[]} if key=='plan' else {})}),'missing')
 
 def read_document(key):return read_document_versioned(key)[0]
 

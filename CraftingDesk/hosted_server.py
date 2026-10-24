@@ -11,6 +11,7 @@ from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
 from urllib.parse import urlsplit
 from nexus_storage import read_document,read_document_versioned,save_document,DocumentConflict
 from setups import validate_setups,validate_plan
+from guide_workspace import validate_guides
 from nexus_data_api import Handler as NexusAuthorization
 
 BASE=Path(__file__).resolve().parent
@@ -50,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
             if os.environ.get('CRAFTING_ACCESS','grafana')!='lan':self.send(b'{"error":"Sign in with your existing Nexus login."}',status=401)
             return
         path=urlsplit(self.path).path
-        if path in ('/api/setups','/api/plan'):
+        if path in ('/api/setups','/api/plan','/api/guides'):
             value,revision=read_document_versioned(path.rsplit('/',1)[1])
             return self.send(json.dumps(value,ensure_ascii=False).encode(),headers={'ETag':'"'+revision+'"'})
         if path=='/api/data':return self.snapshot()
@@ -66,15 +67,15 @@ class Handler(BaseHTTPRequestHandler):
         if not self.authorized():
             if os.environ.get('CRAFTING_ACCESS','grafana')!='lan':self.send(b'{"error":"Sign in with your existing Nexus login."}',status=401)
             return
-        if self.path not in ('/api/import','/api/setups','/api/plan'):return self.send(b'{}',status=404)
+        if self.path not in ('/api/import','/api/setups','/api/plan','/api/guides'):return self.send(b'{}',status=404)
         allowed=set(os.environ.get('CRAFTING_ORIGINS','http://10.20.30.239:8765').split(','))
         if self.headers.get('Origin') is not None and self.headers['Origin'] not in allowed:return self.send(b'{}',status=403)
         try:
             with LOCK:
-                if self.path in ('/api/setups','/api/plan'):
+                if self.path in ('/api/setups','/api/plan','/api/guides'):
                     length=int(self.headers.get('Content-Length','0'))
                     if not 0<length<=1000000:raise ValueError('Invalid saved-plan request size')
-                    validator=validate_plan if self.path=='/api/plan' else validate_setups
+                    validator=validate_guides if self.path=='/api/guides' else validate_plan if self.path=='/api/plan' else validate_setups
                     value=validator(json.loads(self.rfile.read(length)))
                     value,revision=save_document(self.path.rsplit('/',1)[1],value,expected_revision=self.headers.get('If-Match','').strip('"') or None,include_revision=True)
                     return self.send(json.dumps(value,ensure_ascii=False,allow_nan=False).encode(),headers={'ETag':'"'+revision+'"'})

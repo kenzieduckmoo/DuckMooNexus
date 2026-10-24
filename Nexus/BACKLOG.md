@@ -22,3 +22,7 @@ Status: prepared and uploaded October 24, 2026 for the current pre-Forever check
 - Produce individual versioned ZIP files ready for the user to upload to CurseForge. Do not claim unfinished functionality is complete or preview compatibility is live-verified. Uploading the packages to CurseForge itself is not requested by this milestone.
 - Update each addon's own GitHub repository with the current source, new TXT guide and TOC category change; the Nexus aggregate repository alone does not satisfy this requirement. Preserve unrelated remote changes and existing repository visibility. Verify repository identities rather than guessing or creating duplicate repositories.
 - Deliver the ZIP links, repository links and version/status of each addon. Use focused packaging/version checks and record any actual blocker without an excessive test campaign.
+
+## Profession guides
+
+Resumed and delivered October 24: native route choices/progress saved on Nexus, next-batch shopping, stable checkmarks, vendor exclusions and observed recipe alternatives. See PROFESSION-GUIDES-2026-10-24.md. Unknown acquisition prices, random yields and additional expansion/client evidence remain explicit data gates; no claim of globally optimal routing.

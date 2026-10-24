@@ -4,7 +4,7 @@ Updated October 19, 2026. Authority: ../Crafting Desk chat update.txt and the us
 
 ## Finish line
 
-RTM means the personal local app and capture addon support the complete workflows below, with saved user data preserved, regression checks passing, an actual in-game capture/reopen/reload/import check, and laptop access verified. Existing profession guides must remain usable; further route optimization is explicitly deferred. A missing required external verification keeps RTM pending even if implementation is finished. No public hosting, public-user hardening, proof of globally optimal leveling, or new secondary-profession work is required. Use milestones rather than promising a calendar date before measuring scan behavior.
+RTM means the personal local app and capture addon support the complete workflows below, with saved user data preserved, regression checks passing, an actual in-game capture/reopen/reload/import check, and laptop access verified. Existing profession guides must remain usable. The user resumed native guide development on October 24; see the guide delivery note for the completed workflow and evidence limits. A missing required external verification keeps RTM pending even if implementation is finished. No public hosting, public-user hardening, proof of globally optimal leveling, or new secondary-profession work is required. Use milestones rather than promising a calendar date before measuring scan behavior.
 
 ## Implementation order
 
@@ -15,9 +15,9 @@ RTM means the personal local app and capture addon support the complete workflow
 5. **Enable laptop use on the home network.** Configure the launcher and server together for LAN access while retaining localhost. Display the host address and port. Ensure imports, plan saving and copy/export work from the laptop, including origin handling for the actual configured address. Game data stays on the desktop. No router forwarding or public hosting. Verify desktop reads/writes automatically; actual laptop access is a separate release gate. Document any concrete firewall step if required.
 6. **Reconcile and ship the personal RTM build.** Remove obsolete controls and unused paths after checking dependencies. Reconcile README and addon instructions with actual behavior. Run focused regressions plus end-to-end craft, concentration, shopping and import checks using current snapshots without overwriting user plans. Validate primary-profession guide skill resume, stock accounting, purchases, checkpoints and exports; fix regressions but do not resume optimization. Package a versioned addon ZIP if changed. Record remaining genuine limitations and all verification in the ledger. GitHub publication is not implied.
 
-## Profession Guides: deliberately paused work
+## Profession Guides: resumed and delivered October 24
 
-Keep the current primary-profession routes, learned alternatives, purchase lists, unlock checkpoints and progress markers. Before RTM validate those existing flows and repair regressions caused by shared changes. Defer deeper route searches, new optimization algorithms, expanded recipe-source coverage and uncertain skill-up probability modeling until other priorities are complete or the user requests them. Cooking and all secondary-profession development are excluded for now; preserve existing data.
+Native Nexus guides now expose recipe alternatives, PostgreSQL progress/choices, bounded next-batch shopping, acquisition checkpoints and recipe investments. Recorded skill and stock update through the common data pipeline. See ../Nexus/PROFESSION-GUIDES-2026-10-24.md for use, verification and limits. Global-optimality proofs and invented skill-up probabilities are not requirements. Cooking and other secondary-profession development remain excluded; preserve existing data.
 
 ## Character display order
 
