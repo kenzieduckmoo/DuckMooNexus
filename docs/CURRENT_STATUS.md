@@ -2,7 +2,7 @@
 
 ## Delivered
 
-- Native Nexus website on the private server: overview, item-name auction search, dedicated character sheets, Crafting Desk and financial workspace. Grafana remains available separately.
+- Native Nexus website on the private server: overview, item-name auction search, dedicated character sheets, warband profession board, Crafting Desk and financial workspace. Grafana remains available separately.
 - PostgreSQL source archival and source-specific adapters; scheduled auction/public-character API imports and Windows SavedVariables sync.
 - Character pages: equipment/artwork, inventory, professions, history, visual vault/weekly progress, completed quest chronicle with API/Omni source choice, title search and recorded turn-ins, searchable encounters, currencies, PvP and source evidence.
 - Financials: actual warbank observations and growth, recorded cash movement, raw patron-order gold with profession filters and graphs, financial activity and auction-deposit movement.
@@ -11,10 +11,14 @@
 
 ## Important remaining work
 
-1. Seven real characters have reached PostgreSQL. Real data exposed and led to a logout lifecycle correction and sparse-bag null handling. Legacy profiles were recovered from earlier retained session events, with their original timestamps. The 0.1.2 logout correction has since been observed in real client saves. Installed 0.1.3 adds acknowledged journal rotation; its load/save/sync/load cycle remains to be verified. See `Nexus/OMNI-LIVE-DATA-2026-10-23.md`.
-2. Verify acknowledged event-journal rotation in the actual client. Version 0.1.3 implements the confirmed-archive receipt bridge and retains newer unsent events. The preview retains 10,000 unconfirmed events per character and pauses/counts overflow; it is not yet a complete long-term life recorder. Direct carried bags and partial reputations are implemented in 0.1.1. Add bank storage and broader character progress coverage.
+1. Real Omni captures and the corrected logout lifecycle have been observed. Acknowledged journal rotation has now completed in the actual client, with historical event records and recovered current profiles retained. Broader capture/scanner coverage remains partial.
+2. Warband profession board is deployed with source-aware skill, knowledge, concentration forecasts and recorded patron earnings. Character/profession shortcuts connect Crafting Desk and financials. Folio/Planner 0.5.3 context corrections are installed; their next real client load remains to be verified.
 3. Verify the crafting scanner's real in-game open/close/reload/context-change lifecycle. Confirm actual laptop save/page-refresh persistence.
 4. Expand retained character history with a bounded backfill; preserve original archives and source timestamps.
 5. Forever in-game work waits until November 4. Hardcore character-life capture must be ready before the expected January/February start; the exact date has not been announced. Deeper profession-guide optimization remains paused.
 
 Latest detail: `Nexus/OMNI-CAPTURE-2026-10-23.md`, `Nexus/CHARACTER-PROGRESS-2026-10-23.md`, `Nexus/NATIVE-FINANCES-HISTORY.md` and `CraftingDesk/EXECUTION-LEDGER.md`. Earlier deployment/audit notes describe their own dated state, which may have been superseded.
+
+Deferred feature requests: see [Nexus backlog](../Nexus/BACKLOG.md), including reagent buying-day and quantity recommendations.
+
+Latest profession delivery: `Nexus/PROFESSION-BOARD-2026-10-23.md`. The reagent buying-day/quantity advisor remains deferred in the backlog.

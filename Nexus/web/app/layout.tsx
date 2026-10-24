@@ -4,6 +4,7 @@ import './characters.css';
 import './crafting.css';
 import './finances.css';
 import './progress.css';
+import './professions.css';
 import { Shell } from '@/components/shell';
 import {FreshnessProvider} from '@/components/freshness';
 export const metadata: Metadata={title:{default:'DuckMoo Nexus',template:'%s · DuckMoo Nexus'},description:'Your warband, connected. Markets, crafting and the characters behind it all.'};

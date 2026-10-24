@@ -2,13 +2,13 @@
 
 A personal World of Warcraft data platform: independent addon capture → archived source files → PostgreSQL → the Nexus website, Crafting Desk and Grafana.
 
-This repository contains the maintained source as of October 23, 2026. The native website, financial workspace, character sheets and crafting services are deployed on the existing private Nexus server. Omni Capture is an installed Retail preview awaiting its first real in-game capture; it is not a completed life-history recorder.
+This repository contains the maintained source as of October 23, 2026. The native website, financial workspace, character sheets and crafting services are deployed on the existing private Nexus server. Omni Capture has real Retail observations and acknowledged journal rotation; coverage remains partial and it is not a completed life-history recorder.
 
 ## Source map
 
 | Folder | Purpose |
 |---|---|
-| `Nexus/web/` | Next.js/React website: overview, auction search, character sheets, crafting and financials |
+| `Nexus/web/` | Next.js/React website: overview, auction search, character sheets, professions, crafting and financials |
 | `Nexus/clean-install/app/` | SavedVariables adapters, source archival, PostgreSQL migrations, Blizzard API workers and Grafana dashboards |
 | `Nexus/clean-install/` | Server/Windows setup, restricted SSH receiver and Compose service definitions |
 | `Nexus/craft-engine/` | Internal Node crafting calculation worker |

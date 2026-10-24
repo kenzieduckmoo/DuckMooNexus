@@ -1,6 +1,6 @@
 local addon,F=...
 DuckMooFolio=F
-F.name=addon;F.version='0.5.2';F.Model=F.Model or {}
+F.name=addon;F.version='0.5.3';F.Model=F.Model or {}
 local M=F.Model
 function F.Safe(fn,...)
     if type(fn)~='function' then return nil end
@@ -130,19 +130,22 @@ function F.DiscoverProfession()
     local p=c.professions[base.professionID] or {expansions={}}
     p.id=base.professionID;p.name=base.professionName or base.name or 'Profession';p.expansions=p.expansions or {};c.professions[p.id]=p
     local current=S(api.GetChildProfessionInfo)
+    -- Profession UI transitions can expose a child from the previous context.
+    if current and current.parentProfessionID and current.parentProfessionID~=base.professionID then return end
     local children=S(api.GetChildProfessionInfos) or {}
     p.expansionChecks=p.expansionChecks or {}
     if current then children[#children+1]=current end
     for _,info in ipairs(children) do
         local usableRank=type(info.skillLevel)=='number' and (info.skillLevel>0 or type(info.maxSkillLevel)=='number' and info.maxSkillLevel>0)
-        if info.professionID then
+        local matchesParent=info.parentProfessionID==base.professionID
+        if info.professionID and matchesParent then
             F.RecordProfessionCatalog(p.id,info)
             if usableRank then
                 p.expansionChecks[info.professionID]=F.Now()
                 if info.skillLevel==0 and p.expansions[info.professionID]then p.expansions[info.professionID].rank=0 end
             end
         end
-        if info.professionID and ((info.skillLevel or 0)>0 or current and info.professionID==current.professionID) then
+        if info.professionID and matchesParent and ((info.skillLevel or 0)>0 or current and info.professionID==current.professionID) then
             local row=p.expansions[info.professionID] or {};p.expansions[info.professionID]=row
             row.id=info.professionID;row.name=info.professionName or info.name or row.name or 'Expansion skill'
             if usableRank then row.rank=info.skillLevel end
@@ -150,7 +153,7 @@ function F.DiscoverProfession()
             row.seenAt=F.Now()
         end
     end
-    if current and current.professionID and p.expansions[current.professionID] then
+    if current and current.parentProfessionID==base.professionID and current.professionID and p.expansions[current.professionID] then
         local ids=S(api.GetAllRecipeIDs);local count=0
         if ids then
             for _,id in ipairs(ids) do local r=S(api.GetRecipeInfo,id);if r and r.learned then count=count+1 end end
@@ -158,7 +161,7 @@ function F.DiscoverProfession()
             p.expansions[current.professionID].recipesFiltered=true -- depends on profession UI filters
         end
     end
-    if current and current.professionID and p.expansions[current.professionID] then
+    if current and current.parentProfessionID==base.professionID and current.professionID and p.expansions[current.professionID] then
         local list=F.ProfessionKnowledge(current.professionID)
         if list then p.expansions[current.professionID].knowledge=list end
     end

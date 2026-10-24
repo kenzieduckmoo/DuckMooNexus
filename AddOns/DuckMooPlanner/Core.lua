@@ -1,7 +1,7 @@
 local addon, P = ...
 DuckMooPlanner = P
 P.name = addon
-P.version = '0.5.2'
+P.version = '0.5.3'
 P.fullName = 'DuckMoo Services: Concentration Planner'
 P.publisher = 'DuckMoo Media'
 P.weekOffset = 0
@@ -107,7 +107,7 @@ function P.Discover()
                 local r = c.professions[skill] or {}
                 c.professions[skill]=r
                 r.currencyID, r.skillLineID = currencyID,skill
-                r.name = (base and base.professionName) or p.parentProfessionName or p.professionName or 'Profession'
+                r.name = p.parentProfessionName or (base and p.parentProfessionID==base.professionID and base.professionName) or p.professionName or 'Profession'
                 r.expansion = p.expansionName or p.professionName or ''
                 r.expansionID=p.expansionID or r.expansionID
                 r.icon = p.icon or info.iconFileID

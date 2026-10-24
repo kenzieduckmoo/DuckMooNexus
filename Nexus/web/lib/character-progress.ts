@@ -52,7 +52,7 @@ export function encounterRows(data:D,kind:string){
 export function knowledgeRows(data:D){
  const rows=values(progressSources(data).character.knowledgeData).filter((r:D)=>r&&typeof r==='object'&&r.professionName);
  for(const record of values(data.omni?.knowledge?.data)){
-  const r=record.data;if(!r)continue;
+  const r=record?.data;if(!r)continue;
   const tabs=values(r.tabs),currency=tabs.flatMap((t:D)=>values(t.currencies).filter((c:D)=>t.spendCurrency!=null&&c.traitCurrencyID===t.spendCurrency)).find((c:D)=>numeric(c.quantity)!=null&&numeric(c.spent)!=null);
   const specTabs=tabs.map((t:D)=>{const nodes=values(t.nodes).filter((n:D)=>numeric(n.maxRanks)!=null&&numeric(n.currentRank??n.activeRank)!=null);return {tabID:t.tabID,name:t.name,spentRanks:nodes.length?nodes.reduce((n:number,r:D)=>n+(r.currentRank??r.activeRank),0):null,totalRanks:nodes.length?nodes.reduce((n:number,r:D)=>n+r.maxRanks,0):null};});
   const own={skillLineID:r.skillLineID,professionName:r.profession?.professionName??r.profession?.name??'Profession '+r.skillLineID,expansionName:r.profession?.professionName??r.profession?.name??'Profession '+r.skillLineID,lastUpdate:record.observedAt,spentPoints:currency?.spent,unspentPoints:currency?.quantity,specTabs,source:'DuckMoo Omni Capture'};
