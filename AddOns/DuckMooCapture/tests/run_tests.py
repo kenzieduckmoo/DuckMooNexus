@@ -117,14 +117,14 @@ lua.execute('assert(loadfile(...))("DuckMooCapture",NS)',str(ROOT/'Combinations.
 lua.execute(r'''
 local schema=C_TradeSkillUI.GetRecipeSchematic()
 local combos,total=NS.ReagentCombinations(schema,64)
-assert(#combos==3 and total==3)
-assert(#combos[3]==3) -- mixed modified slot plus a regular reagent
+assert(#combos==2 and total==2)
+assert(#combos[1]==2 and #combos[2]==2) -- one whole quality per slot
 for _,combo in ipairs(combos)do assert(NS.Model.ValidateReagents(schema,combo)) end
-local limited,full=NS.ReagentCombinations(schema,2);assert(#limited==2 and full==3)
-schema.reagentSlotSchematics[1].quantityRequired=100
-local bounded,total=NS.ReagentCombinations(schema,64);assert(#bounded==64 and total==101)
+local limited,full=NS.ReagentCombinations(schema,1);assert(#limited==1 and full==2)
+schema.reagentSlotSchematics[1].quantityRequired=10
+local bounded,total=NS.ReagentCombinations(schema,64);assert(#bounded==2 and total==2);for _,combo in ipairs(bounded)do assert(combo[1].quantity==10)end
 schema.reagentSlotSchematics[1].reagents[3]={itemID=14};schema.reagentSlotSchematics[1].quantityRequired=2
-local three,full=NS.ReagentCombinations(schema,64);assert(#three==6 and full==6)
+local three,full=NS.ReagentCombinations(schema,64);assert(#three==3 and full==3)
 schema.reagentSlotSchematics[1].reagents[1]={currencyID=5}
 assert(not NS.ReagentCombinations(schema,64))
 ProfessionsFrame.IsShown=function()return true end
@@ -148,22 +148,22 @@ end
 ProfessionsFrame.IsShown=function()return false end;drain();assert(queries==0)
 ProfessionsFrame.IsShown=function()return true end;NS.StartScanner();drain()
 local c=DuckMooCaptureDB.characters['Player-test']
-assert(queries==6 and c.scanStatus[2906].state=='Finished')
+assert(queries==4 and c.scanStatus[2906].state=='Finished')
 assert(c.scanStatus[2906].checked==2 and c.scanStatus[2906].skipped==1)
-assert(c.scannedRecipes[123].totalCombinations==3)
+assert(c.scannedRecipes[123].totalCombinations==2)
 local count=0;for _,r in pairs(c.scannedRecipes[123].outcomes)do count=count+1;assert(r.operation.bonusStats[1].ratingPct==12)end
-assert(count==6)
-NS.StartScanner();drain();assert(queries==6) -- finished sessions do not loop forever
-NS.StartScanner(true);InCombatLockdown=function()return true end;drain();assert(queries==6)
+assert(count==4)
+NS.StartScanner();drain();assert(queries==4) -- finished sessions do not loop forever
+NS.StartScanner(true);InCombatLockdown=function()return true end;drain();assert(queries==4)
 InCombatLockdown=function()return false end
 local prior=c.scannedRecipes[123]
 C_TradeSkillUI.GetCraftingOperationInfo=function()return nil end
 NS.StartScanner();drain();assert(c.scannedRecipes[123]==prior and prior.lastAttemptUnavailable)
 -- Profession source change cancels pending work before any API query.
-NS.StartScanner(true);NS.StopScanner('Paused');drain();assert(queries==6)
+NS.StartScanner(true);NS.StopScanner('Paused');drain();assert(queries==4)
 C_TradeSkillUI.IsTradeSkillLinked=function()return true end;NS.StartScanner(true);assert(#timers==0)
 ''')
-print('Scanner tests passed: mixed qualities, caps, both modes, bonus stats, pause/resume, combat/source guards, no repeated scans, and unavailable-data retention')
+print('Scanner tests passed: whole-slot qualities, caps, both modes, bonus stats, pause/resume, combat/source guards, no repeated scans, and unavailable-data retention')
 lua.execute(r'''
 C_TradeSkillUI.IsTradeSkillLinked=function()return false end
 C_TradeSkillUI.GetChildProfessionInfo=function()return {professionID=0}end
@@ -175,20 +175,21 @@ lua.execute(r'''
 local schema={recipeType=1,quantityMin=1,quantityMax=1,reagentSlotSchematics={}}
 for i=1,3 do schema.reagentSlotSchematics[i]={required=true,quantityRequired=20,dataSlotType=Enum.TradeskillSlotDataType.ModifiedReagent,dataSlotIndex=i,reagents={{itemID=i*10},{itemID=i*10+1}}} end
 local combos,total=NS.ReagentCombinations(schema,256)
-assert(#combos==256 and total==21*21*21)
+assert(#combos==8 and total==2*2*2)
 local varied={{},{},{}};local seen={}
 for _,allocations in ipairs(combos) do
  local valid=NS.Model.ValidateReagents(schema,allocations);assert(valid and not seen[valid.signature]);seen[valid.signature]=true
- for slot=1,3 do varied[slot][valid.items[slot*10+1] or 0]=true end
+ for slot=1,3 do local amount=valid.items[slot*10+1] or 0;assert(amount==0 or amount==20);varied[slot][amount]=true end
 end
-for slot=1,3 do local n=0;for _ in pairs(varied[slot])do n=n+1 end;assert(n>=18) end
+for slot=1,3 do local n=0;for _ in pairs(varied[slot])do n=n+1 end;assert(n==2) end
+local capped,full=NS.ReagentCombinations(schema,3);assert(#capped==3 and full==8)
 local repeated=NS.ReagentCombinations(schema,256)
 for i=1,#combos do assert(NS.Model.ValidateReagents(schema,combos[i]).signature==NS.Model.ValidateReagents(schema,repeated[i]).signature) end
 ''')
-print('Broad-search checks passed: deterministic unique samples, conserved quantities and mixed coverage in every slot')
+print('Whole-quality checks passed: eight combinations instead of 9,261, conserved quantities and no split stacks')
 lua.execute(r'''
 C_TradeSkillUI.GetChildProfessionInfo=function()return {professionID=2906}end
-C_TradeSkillUI.GetRecipeSchematic=function()return {recipeType=1,quantityMin=1,quantityMax=1,reagentSlotSchematics={{required=true,quantityRequired=20,dataSlotType=1,dataSlotIndex=1,reagents={{itemID=11},{itemID=12}}}}}end
+C_TradeSkillUI.GetRecipeSchematic=function()return {recipeType=1,quantityMin=1,quantityMax=1,reagentSlotSchematics={{required=true,quantityRequired=20,dataSlotType=1,dataSlotIndex=1,reagents={{itemID=11},{itemID=12},{itemID=13}}},{required=true,quantityRequired=10,dataSlotType=1,dataSlotIndex=2,reagents={{itemID=21},{itemID=22},{itemID=23}}}}}end
 local skill=100
 C_TradeSkillUI.GetCraftingOperationInfo=function(id,reagents,guid,apply)
  queries=queries+1
@@ -212,7 +213,7 @@ NS.ScannerEvent(nil,'UNIT_AURA','player')
 NS.ScannerEvent(nil,'UNIT_AURA','player')
 while #timers>0 do table.remove(timers,1)() end
 assert(c.scanStatus[2906]==saved and saved.state=='Finished') -- irrelevant aura retained job
-assert(not c.scannedRecipes[123].partial and c.scannedRecipes[123].combinations==21)
+assert(not c.scannedRecipes[123].partial and c.scannedRecipes[123].combinations==9)
 skill=101
 NS.ScannerEvent(nil,'UNIT_AURA','player')
 while #timers>0 do table.remove(timers,1)() end

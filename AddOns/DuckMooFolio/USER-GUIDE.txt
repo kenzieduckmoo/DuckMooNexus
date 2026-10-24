@@ -1,0 +1,124 @@
+DUCKMOO SERVICES: CHARACTER FOLIO
+
+PURPOSE AND DEPENDENCIES
+A character binder, searchable roster and personal notebook. No other DuckMoo
+addon is required. All The Things (ATT) is optional for Collection leads;
+DuckMoo Planner is optional for its shortcut. It has its own database and can
+be disabled independently without disabling the crafting or Omni collectors.
+
+FIRST USE
+Log into each character once. Type /folio or /dmfolio, or use the book minimap
+button. The initial sheet is the current character; select Roster to browse
+recorded alts. Open each crafting profession naturally and allow its data to
+load to discover expansion skills and knowledge. Offline sheets are snapshots.
+
+COMMANDS
+/folio or /dmfolio        Open the character sheet.
+/folio roster            Open the roster.
+/folio scan              Refresh the current character and open profession.
+/folio minimap           Toggle the minimap button.
+Drag/resize the window; geometry is saved. Escape closes it.
+
+PAGES AND EVERYDAY USE
+Character shows identity, level/XP, equipped item level, spec/role, guild,
+location, hearth destination, attributes, movement and available collection
+milestones. Level 82.13 means level 82 plus 13 percent toward the next level;
+sorting uses the unrounded XP fraction. Rested XP is a fraction of one level,
+so a value above 100 percent is possible.
+
+Skills & trades shows recorded professions, expansion ranks, available known
+recipe counts, specialization information, talents and known titles. Missing
+snapshots mean not scanned, not that the profession or recipe is absent.
+
+Reputations shows observed standing/renown and account-wide indicators. The
+scanner temporarily expands collapsed reputation headers and restores them.
+
+Notebook has separate Where I left off, Purpose & plans, Adventuring,
+Professions and Backstory sections. Notes autosave while edited; Save note gives
+explicit feedback. Assign tags supports common and custom tags. Save tags applies
+the selection. Offline characters' notes can be edited. Captures preserve notes
+and tags rather than replacing them with freshly observed character data.
+
+Roster combines class, faction, capable/recorded role, region, realm, profession,
+expansion skill, reputation and tag filters. Search includes notes. Sort by level,
+XP, item level, name or rested XP; saved views retain useful filter combinations.
+Realm grouping, paging and character selection help with larger rosters.
+
+Census includes profession blindspots and recorded character distributions.
+No owner recorded refers only to saved snapshots, not the whole unvisited account.
+Preferences controls themes, opacity, minimap visibility and appearance.
+
+OPTIONAL ATT COLLECTION LEADS
+Enable ATT for the character, open its main list and let it prepare. Select the
+current character in Folio and click Refresh opportunities. The adapter reads
+ATT's prepared main tree and captured profile context without changing ATT flags,
+filters, collection data or groups. No ATT database is bundled.
+
+Legacy dungeons/raids stop at Dragonflight. Zone leads count distinct visible,
+collectible uncollected quest IDs and exclude known capitals. ATDART chooses the
+lowest exact completion fraction, with tied minima selected once per capture.
+The other rankings use missing counts. Results follow ATT's active filters and
+can include account-wide opportunities; they are not drop rates or runs required.
+Only the current character can refresh; offline characters retain their own
+snapshot and time. If ATT is not ready, prepare its main list and try again.
+
+WHAT IS STORED AND WHEN
+Character GUID/name/realm/region/class/race/faction, level/XP/rested values,
+equipment average, spec/role/hero information, available stats and titles,
+location/bind/guild, profession/expansion/recipe/knowledge observations,
+reputation/renown, account collection totals, optional ATT summaries, your notes,
+tags and appearance/filter choices. Updates follow login, normal character,
+equipment, XP, reputation, talent, location and profession events; deeper
+profession data needs that profession open. Observations retain their timestamps.
+
+PRIVACY, LIMITS AND TROUBLESHOOTING
+Notebook text and tags are personal data and may be included in a Nexus source
+archive when external sync is configured. Do not share your raw database casually.
+Shared mount/pet/achievement totals are account milestones, not individual gains.
+Folio does not record inventory, mail, auctions or exhaustive quest history and
+does not equip gear, change talents or automate profession opening.
+For stale skills, revisit the character and open each expansion profession.
+For missing data, check whether the API was available and the character visited.
+ATT loading/filter problems are not proof of a completed or empty collection.
+
+CURRENT VERSION NOTES
+0.5.3 rejects mismatched parent/child profession UI context so another open
+profession cannot be mislabeled as the current one. Historical observations are
+preserved. Focused context checks passed; actual client coverage of the newest
+guard remains pending. Existing UI, notes, tags and snapshot behavior are retained.
+
+INSTALLATION, UPDATING AND DATA SAFETY
+Version in this bundle: 0.5.3. Documentation prepared October 24, 2026.
+Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+interface is not proof every path has been tested on that patch. This package
+does not claim Forever/Classic compatibility. Category: DuckMoo Media.
+
+Exit WoW before installing/updating. Extract the single DuckMooFolio folder into
+World of Warcraft/_retail_/Interface/AddOns/. Confirm DuckMooFolio/DuckMooFolio.toc
+is immediately inside AddOns, not inside another duplicate folder. Enable it in
+the AddOns screen for the characters you use, then log in. Follow any client
+out-of-date notice according to the actual patch; do not invent Interface values.
+
+The account-wide SavedVariable is DuckMooFolioDB. WoW normally writes it to
+_retail_/WTF/Account/<ACCOUNT>/SavedVariables/DuckMooFolio.lua with a .lua.bak backup.
+The account/installation is the storage boundary; only observed characters are
+known. In-memory edits and captures persist on normal /reload or logout. A crash
+can lose changes since the last save. Back up the file while WoW is closed before
+manual maintenance. Updating addon files does not require deleting SavedVariables.
+Do not edit or restore them while the client is running: it can overwrite edits.
+Disable the addon to stop its collection/UI without deleting the saved database.
+Removing its AddOns folder alone does not erase the SavedVariables file.
+
+DATA LEAVING THE GAME
+Addon Lua does not make HTTP requests, send telemetry to a vendor or directly
+upload files. Nexus transfer, if configured for this addon, is a separate desktop
+process using independently managed credentials. Raw archives and normalized
+observations have separate retention. This ZIP contains source/runtime files,
+documentation and applicable license/notice only, never player databases or
+API/SSH credentials. Other addons' data and databases are not bundled.
+
+REPORTING A PROBLEM
+Include addon version, client build/locale, command/page, steps and exact error,
+plus whether the data was current or an offline snapshot. Inspect timestamps
+before treating missing data as zero. Share a minimal redacted sample only when
+needed; notes, names, character histories and credentials should stay private.

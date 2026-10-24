@@ -1,4 +1,4 @@
-# DuckMoo Services: Concentration Planner 0.5.2
+# DuckMoo Services: Concentration Planner 0.5.3
 
 By DuckMoo Media. Another suspiciously useful thing by DuckMoo Media.
 
@@ -192,3 +192,8 @@ The full-window reset timer is now drawn inside the sidebar instead of underneat
 ## 0.5.2 window stacking
 
 Main windows and standalone dialogs enable native top-level window behavior and render-layer flattening so their child panels stack as a single window when overlapping other DuckMoo windows. Clicking a window brings it forward. Layouts, colors, reset logic, data and chosen opacity remain unchanged. Actual overlapping-window rendering requires a Retail client check.
+
+
+## Bundled user guide
+
+See USER-GUIDE.txt for current installation, commands, collected data, storage, Nexus integration, troubleshooting and limitations. All TOCs use the DuckMoo Media category.

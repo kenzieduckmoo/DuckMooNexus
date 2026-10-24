@@ -1,3 +1,18 @@
+# Current release: 0.9.0 — whole-slot quality scanning
+
+The background scanner uses one quality for each required reagent slot's entire
+quantity. Ten ore with two qualities has two choices, not eleven split-stack
+allocations. Different slots still combine independently and every available
+quality is included. Both concentration modes and existing scan safety limits
+remain. Older persisted scan jobs cannot resume under the new allocation policy;
+normal rescanning replaces prior recipe results. Manual capture can still record
+an actual mixed-quality craft. Mixed-stack cost optimization is deliberately
+outside this scanner's scope. No live speed measurement is claimed.
+
+See USER-GUIDE.txt for the current behavior. Earlier version notes follow.
+
+Current release documentation: see **USER-GUIDE.txt** for installation, commands, captured data, storage, Nexus integration and current verification limits. Earlier version notes below are historical.
+
 # DuckMoo Capture 0.8.0
 
 Passive, read-only collection for Crafting Desk. Replace the existing DuckMooCapture folder in Retail Interface/AddOns with this version, then reload or restart WoW. Existing SavedVariables remain compatible.

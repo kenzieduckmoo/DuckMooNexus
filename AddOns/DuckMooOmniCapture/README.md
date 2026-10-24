@@ -1,3 +1,5 @@
+Current release documentation: see **USER-GUIDE.txt** for installation, commands, captured data, storage, Nexus integration and current verification limits. Earlier version notes below are historical.
+
 # DuckMoo Omni Capture 0.1.1 â€” Retail preview
 
 Independent from DuckMooCapture, DuckMooFolio, WarbandNexus and WoWthing Collector. No addon dependency. Uses its own `DuckMooOmniCaptureDB`, settings and capture lifecycle. Category: DuckMoo Media.

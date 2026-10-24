@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useEffect,useState } from 'react';
 
@@ -82,6 +83,7 @@ export function AuctionHouse(){
  <div className="page-kicker"><span className="small-diamond"/> THE AZEROTH MARKETPLACE</div><div className="page-title-row"><div><h1>Auction House<span>.</span></h1><p className="page-subtitle">Find the right price. See the bigger picture.</p></div><AutoStatus/></div>
 
  <div className="market-banner"><div><span className="live-dot"/><b>Blizzard AH snapshots</b><span>Collected automatically · US region</span></div><small>{market?'Fetched '+ago(market.fetched_at):'Loading connected markets…'}</small></div>
+ <Link className="surface market-buying-link" href="/auctions/buying"><span>Reagent buying advisor <small>Your usual purchases, recorded stock and weekday price patterns</small></span><ArrowUpRight size={17}/></Link>
 
  <section className="surface market-controls" aria-label="Search and market filters"><label className="search-field"><Search size={20}/><Input aria-label="Search items by name or item ID" placeholder="Search an item by name…" value={query} maxLength={100} onChange={e=>{setVariant('');setQuery(e.target.value);}}/></label><div className="market-picker"><label htmlFor="market">Market</label><select id="market" value={scope} onChange={e=>{setVariant('');setScope(e.target.value);}}>{!markets.length&&<option value="commodities">US commodities</option>}{markets.map(m=><option key={m.scope} value={m.scope}>{m.label}</option>)}</select></div><div className="sort-picker"><label htmlFor="sort">Sort matches</label><select id="sort" value={sort} onChange={e=>setSort(e.target.value)}><option value="name">Item name</option><option value="price">Lowest price</option><option value="quantity">Listed quantity</option></select></div></section>
 

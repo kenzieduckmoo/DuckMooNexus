@@ -1,7 +1,7 @@
 local _, NS = ...
 local M = NS.Model
 
--- Exhaust small spaces; spread bounded samples across every slot in large ones.
+-- Use a single whole-stack quality choice per required slot; never split a slot.
 -- No price or quality prediction: each returned allocation is queried in-game.
 function NS.ReagentCombinations(schematic, limit)
     limit = limit or 256
@@ -14,7 +14,7 @@ function NS.ReagentCombinations(schematic, limit)
             if type(n)~='number' or n<1 or n>1000 or n~=math.floor(n) or #options<1 or #options>3 then return nil,'Unsupported reagent choices' end
             if #options>1 and slot.dataSlotType~=Enum.TradeskillSlotDataType.ModifiedReagent then return nil,'Unqueryable reagent alternatives' end
             for _,r in ipairs(options) do if not r.itemID or r.currencyID then return nil,'Currency or unknown reagent' end end
-            local count=#options==1 and 1 or (#options==2 and n+1 or (n+1)*(n+2)/2)
+            local count=#options
             slots[#slots+1]={slot=slot,n=n,options=options,count=count}
             total=total*count
         end
@@ -25,29 +25,16 @@ function NS.ReagentCombinations(schematic, limit)
         if #results>=limit then return end
         local allocations={}
         for k,s in ipairs(slots) do
-            local index=indices[k] or 0
-            local counts={s.n}
-            if #s.options==2 then counts={s.n-index,index}
-            elseif #s.options==3 then
-                local first=0
-                while index>s.n-first do index=index-(s.n-first+1);first=first+1 end
-                counts={first,index,s.n-first-index}
-            end
-            for i,n in ipairs(counts) do
-                if n>0 then allocations[#allocations+1]={reagent=M.Copy(s.options[i]),quantity=n,dataSlotIndex=s.slot.dataSlotIndex,dataSlotType=s.slot.dataSlotType} end
-            end
+            local index=(indices[k] or 0)+1
+            allocations[#allocations+1]={reagent=M.Copy(s.options[index]),quantity=s.n,
+                dataSlotIndex=s.slot.dataSlotIndex,dataSlotType=s.slot.dataSlotType}
         end
         local valid=M.ValidateReagents(schematic,allocations)
         if valid and not seen[valid.signature] then seen[valid.signature]=true;results[#results+1]=allocations end
     end
-    local function pureIndex(s,quality)
-        if #s.options==1 then return 0 end
-        if #s.options==2 then return quality==1 and 0 or s.n end
-        return quality==1 and s.count-1 or quality==2 and s.n or 0
-    end
     -- Anchor both ends before any cap can favor one end of the space.
     for _,high in ipairs({false,true}) do
-        local indices={};for i,s in ipairs(slots) do indices[i]=pureIndex(s,high and #s.options or 1) end;emit(indices)
+        local indices={};for i,s in ipairs(slots) do indices[i]=high and #s.options-1 or 0 end;emit(indices)
     end
     if total<=limit then
         for rank=0,total-1 do
@@ -57,14 +44,8 @@ function NS.ReagentCombinations(schematic, limit)
             emit(indices)
         end
     else
-        -- Reserve most of the budget for mixed qualities, not just pure corners.
-        local pureBudget=math.max(#results,math.floor(limit/4))
-        local function corners(i,indices)
-            if #results>=pureBudget then return end
-            if i>#slots then emit(indices);return end
-            for q=1,#slots[i].options do indices[i]=pureIndex(slots[i],q);corners(i+1,indices) end
-        end
-        corners(1,{})
+        -- Large recipes still use a bounded, deterministic spread across whole
+        -- quality choices for every slot, with both extremes already anchored.
         local primes={2,3,5,7,11,13,17,19,23,29,31,37}
         local function radical(n,base)
             local value,factor=0,1/base

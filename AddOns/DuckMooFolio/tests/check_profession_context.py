@@ -26,16 +26,16 @@ C_CurrencyInfo={GetCurrencyInfo=function() return {maxQuantity=1000} end}
 ''')
 source=(ROOT/'Core.lua').read_text(encoding='utf-8')
 lua.execute(source[source.index('function F.DiscoverProfession()'):source.index('function F.ReadTraitSelections(')])
-source=(ROOT.parent/'DuckMooPlanner/Core.lua').read_text(encoding='utf-8')
-lua.execute(source[source.index('function P.Discover()'):source.index('function P.RefreshCurrent()')])
 lua.execute('''
 F.DiscoverProfession()
 assert(C.professions[171].expansions[2906].rank==75)
 assert(C.professions[171].expansions[2918]==nil)
 CHILD=TAILORING;F.DiscoverProfession()
 assert(C.professions[171].expansions[2918]==nil)
-P.Discover()
-assert(C.professions[2906].name=='Alchemy')
-assert(C.professions[2918].name=='Tailoring')
 ''')
-print('Mixed child lists and stale current-profession transitions preserve Folio ownership and Planner names.')
+planner=ROOT.parent/'DuckMooPlanner/Core.lua'
+if planner.is_file():
+    source=planner.read_text(encoding='utf-8')
+    lua.execute(source[source.index('function P.Discover()'):source.index('function P.RefreshCurrent()')])
+    lua.execute("P.Discover();assert(C.professions[2906].name=='Alchemy');assert(C.professions[2918].name=='Tailoring')")
+print('Mixed child lists and stale current-profession transitions preserve Folio ownership; optional sibling Planner naming checked when present.')

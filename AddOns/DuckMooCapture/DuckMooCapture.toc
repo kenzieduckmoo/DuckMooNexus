@@ -2,7 +2,7 @@
 ## Title: DuckMoo Services: Crafting Capture
 ## Notes: Read-only crafting operation snapshots for the local Crafting Desk.
 ## Author: DuckMoo Media
-## Version: 0.8.0
+## Version: 0.9.0
 ## SavedVariables: DuckMooCaptureDB
 ## Category: DuckMoo Media
 Model.lua

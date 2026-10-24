@@ -1,0 +1,13 @@
+# Reagent buying advisor — October 24, 2026
+
+Deployed at `/auctions/buying`, linked from Auction House. Uses existing PostgreSQL purchase invoices, independently timestamped Syndicator inventory, official item metadata and retained US commodity snapshots. Search accepts names or item IDs; separate item IDs/quality evidence remain separate cards. Up to 60 repeatedly purchased trade goods are ranked by buying-day frequency. No connected-realm prices are mixed into region-wide commodity patterns.
+
+The advisor shows recorded quantities/spending, latest unit price, a 7- or 14-day purchase-pace target and a provisional top-up only when an eligible stock total is known. At least three buying days and fourteen days of available invoice history are required for quantity advice. Buying pace is a replenishment proxy, not measured consumption. Stock only counts explicitly unbound character bags/bank and warbank rows; missing inventory is unknown. Guild, auctions, bound and unknown-bound holdings are excluded. Cached stock has a file-save timestamp, not an invented individual observation time. Listed prices do not guarantee fill quantity or cost.
+
+Price observations are deduplicated by response modification time, summarized by daily median and then weekday median in America/Chicago. Missing days are not zero; more hourly samples do not give a day more weight. Weekday advice requires at least a 28-day span, three observed days of every weekday and a meaningful price advantage of at least three percent. A recent seven-day median shift over thirty percent suppresses advice. The current short history therefore displays collecting status. No automated buying occurs.
+
+Fixed an associated enrichment gap: an addon-provided name or media-only item row no longer prevents fetching official item classification. Purchased items are prioritized, lookups remain bounded and metadata merges preserve cached icons. Migration 019 grants the website only the purchase columns it needs, not raw transaction payloads.
+
+Focused model checks cover insufficient history, a stable weekday pattern, a market shift, missing stock and provisional top-ups. TypeScript and the production build passed. The live advisor endpoint and name/quality/horizon controls were checked with current database records. Source backup: `20261024T060151Z-buying-advisor` under the server's website update backups.
+
+Character history also keeps the newest bounded API observations before chronological display; its source query no longer selects the oldest limit-sized slice. Repaired text encoding in the history UI. Retained Folio/Planner/Omni archives checked at this milestone were already normalized; no replay or raw-file rewrite was necessary.

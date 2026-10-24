@@ -1,0 +1,122 @@
+DUCKMOO SERVICES: CRAFTING CAPTURE
+
+PURPOSE
+Records crafting observations for Crafting Desk. This is a data collector with
+an optional explicit capture command and a background scanner, not a general
+character journal or an automatic crafter. It runs independently of Omni Capture,
+Folio, Planner and CraftSim.
+
+FIRST USE AND NORMAL WORKFLOW
+1. Log into a crafter and open your own profession through Blizzard's normal UI.
+2. Stay on its normal Crafting tab while the read-only scan runs. The status line
+   above the profession window reports its current progress.
+3. Switch to other learned expansion skills to collect those separately. Repeat
+   on other characters; the addon cannot inspect an offline character live.
+4. Browse a learned, ordinary item recipe to collect its selected operation.
+   /dmcap explicitly captures the currently displayed supported recipe.
+5. /dmcapscan requests a fresh scanner pass. It is optional; opening the profession
+   normally starts or resumes scanning without that command.
+6. Save through a normal /reload or logout. An independently configured Nexus
+   sync imports the saved file; the hosted Crafting Desk refreshes automatically.
+   In a standalone desktop setup, import the game snapshots in that application.
+
+WHAT IS RECORDED
+Per-character identity, faction, build and timestamps; recipe IDs and returned
+recipe/profession information; learned and difficulty/skill-up observations;
+schematics and required reagent options; selected reagent quantities and output
+item information; queried operation skill, difficulty, quality, concentration
+cost and bonus-stat values when exposed; available cooldown/charge observations;
+scan status, context, coverage, errors and bounded alternative outcomes. Recipe
+source text and skill/rank history are retained when returned by the game.
+
+Natural trainer/vendor visits also record exposed acquisition offers: NPC, map,
+zone/subzone, time, available item/recipe information, stack price, requirements,
+stock, and alternative currency/item costs. Captured recipe-class vendor items
+are not automatically converted into crafting recipe IDs.
+
+SCANNER BEHAVIOR AND LIMITS
+The scanner evaluates supported learned ordinary item recipes with fixed output
+and item-only required reagents. Each required reagent slot uses one quality for its entire quantity: for ten
+ore, ten low-quality or ten high-quality ore, never a 1/9 or 2/8 mixture. All
+available qualities (including a middle quality) remain separate options. Recipes
+with several slots combine those whole-slot choices, up to 256 per recipe, and
+queries concentration modes separately, up to 24,000 operation queries per
+profession session. Large spaces are bounded samples, not proven global optima. Mixed-quality
+splits are deliberately excluded, even if one might be cheaper at a threshold.
+The scanner cache revision prevents resuming older mixed-allocation jobs. Prior
+observations remain until replaced by a successful normal rescan; historical
+archives and manually captured actual reagent mixtures are preserved.
+Work uses batches of at most eight work units per 0.02-second scheduled callback,
+with an approximately 4 ms cooperative yield when the profiling clock exists.
+A single API call can exceed that target; it is not a frame-time guarantee.
+
+Closing the profession, combat, linked/guild views, or a changed source pauses or
+stops pending work. Version 0.9.0 persists compatible context/cursor checkpoints;
+reopen/reload can reuse validated work. Build, profession, trait and operation
+changes can invalidate it. Unknown context is not assumed to match. Existing
+observations are retained when a newer query fails. A capped or partial scan is
+not evidence that all possible crafts were evaluated.
+
+Orders, recrafts, salvage, enchanting actions, optional/finishing reagents,
+currency-cost recipes and variable base outputs are not generally modeled by
+this scanner. The selected-operation path also refuses unsupported recipes.
+Up to 300 selected/preview operations and 2,000 acquisition offers per character
+are bounded separately. The retained scanned recipe catalog can become large.
+
+HOW TO INTERPRET THE DATA
+An operation preview is not a completed craft, sale, inventory holding or proof
+of profit. Crafting Desk combines observations with separate ownership and price
+sources. Estimates can exclude procs, refunds, sale speed and unsupported effects.
+An old vendor visit is historical evidence, not a promise of current availability.
+Skill-up observations do not establish every future leveling threshold.
+
+TROUBLESHOOTING
+No scan: leave combat; open your own normal Crafting tab; allow the recipe list
+to finish loading; check its status line. Switch expansion skills deliberately.
+No selected operation: choose a supported learned recipe, let its operation load,
+then /dmcap. Unsupported messages are intentional, not permission to craft.
+Stale desk: save in game first, then inspect the external sync and server refresh.
+Large file: it retains alternative recipe outcomes; do not delete it to solve a
+display issue. Back up first and investigate the actual coverage/context.
+
+CURRENT VERIFICATION AND REMAINING WORK
+Real crafting data has been captured and imported. Mocked Lua checks cover the
+scanner/cache changes, and focused importer checks have passed. The full 0.9.0
+real-game open/close/reload/context-change lifecycle remains an explicit check;
+no claim of complete CraftSim-equivalent economics is made.
+
+INSTALLATION, UPDATING AND DATA SAFETY
+Version in this bundle: 0.9.0. Documentation prepared October 24, 2026.
+Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+interface is not proof every path has been tested on that patch. This package
+does not claim Forever/Classic compatibility. Category: DuckMoo Media.
+
+Exit WoW before installing/updating. Extract the single DuckMooCapture folder into
+World of Warcraft/_retail_/Interface/AddOns/. Confirm DuckMooCapture/DuckMooCapture.toc
+is immediately inside AddOns, not inside another duplicate folder. Enable it in
+the AddOns screen for the characters you use, then log in. Follow any client
+out-of-date notice according to the actual patch; do not invent Interface values.
+
+The account-wide SavedVariable is DuckMooCaptureDB. WoW normally writes it to
+_retail_/WTF/Account/<ACCOUNT>/SavedVariables/DuckMooCapture.lua with a .lua.bak backup.
+The account/installation is the storage boundary; only observed characters are
+known. In-memory edits and captures persist on normal /reload or logout. A crash
+can lose changes since the last save. Back up the file while WoW is closed before
+manual maintenance. Updating addon files does not require deleting SavedVariables.
+Do not edit or restore them while the client is running: it can overwrite edits.
+Disable the addon to stop its collection/UI without deleting the saved database.
+Removing its AddOns folder alone does not erase the SavedVariables file.
+
+DATA LEAVING THE GAME
+Addon Lua does not make HTTP requests, send telemetry to a vendor or directly
+upload files. Nexus transfer, if configured for this addon, is a separate desktop
+process using independently managed credentials. Raw archives and normalized
+observations have separate retention. This ZIP contains source/runtime files,
+documentation and applicable license/notice only, never player databases or
+API/SSH credentials. Other addons' data and databases are not bundled.
+
+REPORTING A PROBLEM
+Include addon version, client build/locale, command/page, steps and exact error,
+plus whether the data was current or an offline snapshot. Inspect timestamps
+before treating missing data as zero. Share a minimal redacted sample only when
+needed; notes, names, character histories and credentials should stay private.

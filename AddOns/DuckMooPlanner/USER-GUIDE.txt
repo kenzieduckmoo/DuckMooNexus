@@ -1,0 +1,124 @@
+DUCKMOO SERVICES: CONCENTRATION PLANNER
+
+PURPOSE
+An independent concentration forecast, patron-check calendar and reminder addon.
+It does not require CraftSim or Folio. It cannot craft, submit orders, buy items
+or switch characters. Its patron checks are manual reminders, not a feed of
+available in-game orders.
+
+FIRST USE AND DATA REGISTRATION
+Log into each crafter and open each crafting profession normally. If needed,
+/planner scan scans the open profession. Open /planner, /dmp or /duckplanner.
+Midnight professions are shown by default using recognized skill-line IDs.
+Preferences can include prior expansions, without deleting older observations.
+Unknown/offline characters cannot be discovered or queried live.
+
+WINDOWS AND COMMANDS
+/planner                 Toggle the last window mode.
+/planner compact | full  Choose the compact dashboard or full window.
+/planner today           Follow today's daily planning view.
+/planner daily | weekly | monthly
+                         Open that planning/calendar view.
+/planner reminders       Open reminder notes.
+/planner note            Create a reminder.
+/planner settings        Open Preferences.
+/planner about           Open About.
+/planner scan            Discover the currently open profession.
+/planner minimap         Toggle minimap visibility.
+/planner position        Center the window and clear saved mode positions.
+The /dmp and /duckplanner aliases accept the same subcommands.
+Minimap left-click toggles, right-click opens Preferences, Shift-click changes
+compact mode, and dragging changes the saved minimap angle.
+
+CONCENTRATION
+The addon stores each character GUID and identity, expansion profession/skill-line
+and currency IDs, observed amount/cap, recharge rate when known, and observation
+time. It projects regeneration while offline and marks forecasts as forecasts.
+Currency/profession events and a once-per-minute refresh update available data.
+Normal regeneration can preserve a forecast; spending/refunds replace its basis.
+Zero concentration is valid. Unknown rate is not an excuse to assume a full pool.
+Changes made while the addon is disabled or on another installation are unknown
+until revisited. Fractional values not exposed by the API can cause small forecast
+differences. Tooltips show the last sample and projected values.
+
+PATRON CHECKS
+Use Preferences and Patron schedule to choose a four-day schedule or a fixed
+weekday and its initial due date. Checked patrons records when you checked that
+profession. Four-day schedules advance from the day checked; a fixed weekday
+keeps its chosen weekday. Late work remains visible; future dates are forecasts
+until your actual check establishes the next due date. The addon does not infer
+order completion or gold earned from pressing Checked patrons.
+
+CUSTOM REMINDERS
+Use + Note or /planner note. Enter plain text and YYYY-MM-DD. Choose Once,
+after daily reset, after weekly reset, or every X days (1-3650). Notes accept up
+to 500 characters and are account-wide. Include a character name yourself when
+useful. Dismiss advances a repeat; one-off notes remain available for restoring.
+Edit changes the next scheduled occurrence. Delete requests confirmation.
+Reset-based reminders use the game's regional reset information and refuse to
+guess when it is unavailable. Civil-day schedules and visible times use local
+calendar time. Forecasts are not separate stored copies of your reminder.
+
+ROSTER AND PREFERENCES
+Search/filter registered characters and professions, sort/group them, assign
+custom groups, and hide entries that should not appear. Prior expansions are
+folded away by default; a manual Hide still takes precedence. Professions that
+are unlearned are not automatically erased: use the available Hide/Forget controls
+deliberately. Group deletion preserves the character observations and schedules.
+Appearance controls theme, opacity, compact density and minimap visibility.
+Full/compact size and position are stored separately.
+
+WHAT IS STORED
+Character identity and profession resources, concentration timing, patron
+schedules and manual checks, reminder text/repeat/dismissal state, groups,
+visibility/filter preferences, window geometry and appearance. These records are
+independent of Folio notes and Warband tasks. No reminder executes a macro or
+game action. External Nexus sync may archive this database and use its resource
+samples in the profession board and Crafting Desk; estimates remain distinct
+from observed resource readings and real gold transactions.
+
+TROUBLESHOOTING AND CURRENT VERSION
+Missing crafter: visit it and open the profession. Stale resource: inspect its
+timestamp, reopen the profession and save normally. Missing old expansion:
+check Include prior expansions and Hide settings. Missing window: /planner full
+or /planner position. A stale forecast does not establish live affordability.
+0.5.3 names child professions from their own parent metadata, preventing the
+other open profession from supplying an incorrect label. Focused context checks
+passed; newest actual-client behavior remains to be checked. Never delete the
+database merely to update the addon or resolve a visual issue.
+
+INSTALLATION, UPDATING AND DATA SAFETY
+Version in this bundle: 0.5.3. Documentation prepared October 24, 2026.
+Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+interface is not proof every path has been tested on that patch. This package
+does not claim Forever/Classic compatibility. Category: DuckMoo Media.
+
+Exit WoW before installing/updating. Extract the single DuckMooPlanner folder into
+World of Warcraft/_retail_/Interface/AddOns/. Confirm DuckMooPlanner/DuckMooPlanner.toc
+is immediately inside AddOns, not inside another duplicate folder. Enable it in
+the AddOns screen for the characters you use, then log in. Follow any client
+out-of-date notice according to the actual patch; do not invent Interface values.
+
+The account-wide SavedVariable is DuckMooPlannerDB. WoW normally writes it to
+_retail_/WTF/Account/<ACCOUNT>/SavedVariables/DuckMooPlanner.lua with a .lua.bak backup.
+The account/installation is the storage boundary; only observed characters are
+known. In-memory edits and captures persist on normal /reload or logout. A crash
+can lose changes since the last save. Back up the file while WoW is closed before
+manual maintenance. Updating addon files does not require deleting SavedVariables.
+Do not edit or restore them while the client is running: it can overwrite edits.
+Disable the addon to stop its collection/UI without deleting the saved database.
+Removing its AddOns folder alone does not erase the SavedVariables file.
+
+DATA LEAVING THE GAME
+Addon Lua does not make HTTP requests, send telemetry to a vendor or directly
+upload files. Nexus transfer, if configured for this addon, is a separate desktop
+process using independently managed credentials. Raw archives and normalized
+observations have separate retention. This ZIP contains source/runtime files,
+documentation and applicable license/notice only, never player databases or
+API/SSH credentials. Other addons' data and databases are not bundled.
+
+REPORTING A PROBLEM
+Include addon version, client build/locale, command/page, steps and exact error,
+plus whether the data was current or an offline snapshot. Inspect timestamps
+before treating missing data as zero. Share a minimal redacted sample only when
+needed; notes, names, character histories and credentials should stay private.

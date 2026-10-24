@@ -1,6 +1,6 @@
 # DuckMoo Services: Character Folio
 
-**v0.5.2, by DuckMoo Media**
+**v0.5.3, by DuckMoo Media**
 
 An adventurer's binder for your alt army: character sheets, searchable warband information, personal plans, and collector field notes. A persistent sidebar, compact character cards, searchable roster, and an autosaving notebook. The original purple palette remains available; Trans Pride uses the exact blue, pink, and white of the supplied flag.
 
@@ -106,3 +106,8 @@ Trans Pride uses flag blue as the main background, pink panels, blue buttons, an
 ## 0.5.2 window stacking
 
 Main windows and standalone dialogs enable native top-level window behavior and render-layer flattening so their child panels stack as a single window when overlapping other DuckMoo windows. Clicking a window brings it forward. Layouts, colors, reset logic, data and chosen opacity remain unchanged. Actual overlapping-window rendering requires a Retail client check.
+
+
+## Bundled user guide
+
+See USER-GUIDE.txt for current installation, commands, collected data, storage, Nexus integration, troubleshooting and limitations. All TOCs use the DuckMoo Media category.

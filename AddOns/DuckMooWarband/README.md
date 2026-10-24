@@ -1,3 +1,5 @@
+Current release documentation: see **USER-GUIDE.txt** for installation, commands, captured data, storage, Nexus integration and current verification limits. Earlier version notes below are historical.
+
 # DuckMoo Services: Warband Planner
 
 **0.4.0 preview — by DuckMoo Media**

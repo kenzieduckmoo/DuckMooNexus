@@ -41,8 +41,8 @@ function GetProfessionInfo(i)
 end
 function InCombatLockdown() return false end
 C_TradeSkillUI={GetBaseProfessionInfo=function()return {professionID=197,professionName='Tailoring'}end,
- GetChildProfessionInfo=function()return {professionID=2883,professionName='Khaz Algar Tailoring',skillLevel=100,maxSkillLevel=100}end,
- GetChildProfessionInfos=function()return {{professionID=2539,professionName='Outland Tailoring',skillLevel=75,maxSkillLevel=75},{professionID=2540,professionName='Classic Tailoring',skillLevel=0,maxSkillLevel=300}}end,
+ GetChildProfessionInfo=function()return {professionID=2883,parentProfessionID=197,professionName='Khaz Algar Tailoring',skillLevel=100,maxSkillLevel=100}end,
+ GetChildProfessionInfos=function()return {{professionID=2539,parentProfessionID=197,professionName='Outland Tailoring',skillLevel=75,maxSkillLevel=75},{professionID=2540,parentProfessionID=197,professionName='Classic Tailoring',skillLevel=0,maxSkillLevel=300}}end,
  GetAllRecipeIDs=function()return {1,2}end,GetRecipeInfo=function(id)return {learned=id==1}end,
  IsTradeSkillLinked=function()return false end,IsTradeSkillGuild=function()return false end}
 local headerCollapsed=true
@@ -373,7 +373,7 @@ C_TradeSkillUI.GetProfessionInfoBySkillLineID=function()return nil end
 F.ScanProfessionCoverage(gatherer);assert(gatherer.professions[182].expansions[2912].rank==30)
 local c=F.db.characters['Player-1'];UnitGUID=function()return 'Player-1' end
 C_TradeSkillUI.GetChildProfessionInfos=function()return {}end
-C_TradeSkillUI.GetChildProfessionInfo=function()return {professionID=2539,professionName='Outland Tailoring',skillLevel=0,maxSkillLevel=0}end
+C_TradeSkillUI.GetChildProfessionInfo=function()return {professionID=2539,parentProfessionID=197,professionName='Outland Tailoring',skillLevel=0,maxSkillLevel=0}end
 F.DiscoverProfession();assert(c.professions[197].expansions[2539].rank==75,'A temporary 0/0 profession window overwrote a trained rank')
 print('PASS: gathering expansion ownership, explicit unlearned checks and unavailable API preservation')
 ''')

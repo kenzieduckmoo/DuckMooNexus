@@ -20,6 +20,7 @@ query="DO $$ BEGIN IF NOT EXISTS(SELECT FROM pg_roles WHERE rolname='nexus_web')
 query+=(root/'app/sql/012_item_quality.sql').read_text()+'\nGRANT SELECT ON nexus.item_quality_evidence,nexus.item_qualities TO grafana;\n'
 query+='ALTER ROLE nexus_web SET default_transaction_read_only=on; GRANT USAGE ON SCHEMA nexus TO nexus_web; GRANT SELECT ON '
 query+=','.join('nexus.'+n for n in ['character_roster','character_professions','item_catalog','latest_api_snapshots','warbank_history','source_snapshots','auction_listings','api_item_metadata','api_snapshots','current_inventory','market_observations','item_qualities'])+' TO nexus_web;'
+if (root/'app/sql/019_buying_advisor.sql').is_file():query+=(root/'app/sql/019_buying_advisor.sql').read_text()
 subprocess.run(['docker','compose','--project-directory',str(root),'exec','-T','postgres','psql','-U','nexus','-d','nexus','-v','ON_ERROR_STOP=1','-q'],input=query,text=True,check=True)
 subprocess.run(['docker','compose','--project-directory',str(root),'build','--quiet','ingest'],stdin=subprocess.DEVNULL,check=True)
 subprocess.run(['docker','compose','--project-directory',str(root),'run','--rm','-T','--entrypoint','python','ingest','/app/backfill_tsm_items.py'],stdin=subprocess.DEVNULL,check=True)

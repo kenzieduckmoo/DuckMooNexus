@@ -1,0 +1,120 @@
+DUCKMOO SERVICES: WARBAND PLANNER
+
+PURPOSE AND FIRST USE
+A separate general task planner and bounded activity notebook. It does not
+require Folio, Concentration Planner or Omni Capture. Type /warplan or
+/dmwarband to open it. Type /warplan followed by a task, or type into the quick
+entry box and press Enter. The default is a one-time task for the logged-in
+character, tracked separately for that character. Organizing it can wait.
+
+TASK SCOPE AND RECURRENCE
+Details/Edit can assign selected characters, all recorded characters, a recorded
+class or a custom group. Progress can be separate per character or shared once
+for the account. Group/class eligibility is reevaluated without deleting past
+progress. Only recorded characters are known. The Characters page assigns groups,
+including to offline recorded characters. Optional Folio/Planner roster exports
+import identity with original timestamps and never modify those source addons.
+
+Choose one-time, actual daily/weekly reset, a weekday, or an interval of 1-365
+local calendar days after completion. Category weekday choices affect Today
+visibility without silently completing or skipping a task. A weekday task appears
+on its weekday; an unfinished one-time task stays available on later days.
+Reset-based tasks remain visible with unknown status if their API is unavailable
+and will not record guessed reset progress.
+
+Done records completion; Worked on it records attention; Postpone hides until
+tomorrow's local midnight; Skip hides the current occurrence, advancing intervals;
+Undo reverses the latest supported task action in the current login session.
+Undo does not undo editing, group changes or archiving. All tasks includes hidden,
+completed and archived definitions. Archive/Restore preserves history rather than
+destructively deleting a task. Changing cadence starts a new occurrence while
+retaining historical actions. Starter packs add editable manual reminders, not
+automatic completion detection or an exhaustive seasonal checklist.
+
+WINDOW AND PAGES
+Today lists remaining eligible tasks across recorded characters; * marks the
+current one. By character/By activity changes sorting, not eligibility. Full view
+has Today, All tasks, Characters, Categories, Session, Gold, Loot, Session history
+and Preferences. Search applies to the selected page. Compact rows provide full
+context in tooltips. Drag/resize; full/compact geometry and appearance are saved
+independently. Up to twelve rows per page keep frame use bounded.
+
+ACTIVITY AND GOLD
+Recording begins on entering the world. Login or UI reload starts a new session;
+zone changes keep it; logout closes it. A client interruption stops the session
+at the last observation instead of adding offline time. New session closes and
+starts a session without erasing retained history. Sessions can be named.
+
+Session records wallet/warbank observations, changes and recent events. Combined
+wallet-plus-warbank change cancels an internal transfer once both observations
+arrive. It is observed cash change, not source-attributed income or realized
+profit. Unknown balance intervals stay incomplete. Gold shows timestamped
+warbank/wallet samples and a sum of recorded wallets, not guaranteed account
+wealth. Refresh balances reads available APIs and never moves money.
+
+Loot records localized self-loot messages, item links/variants, quantities,
+received/crafted/looted labels, time and available vendor estimates. Other
+players' loot is ignored. A vendor estimate is separate from gold and auction
+value; unavailable prices remain unknown. This is received-item history, not
+current inventory or proof of a sale. No market prices are invented.
+
+Session history browses retained sessions; filters use session start times.
+Loot filtering uses receipt days, including sessions crossing midnight. Today
+is the local civil day; Last 7 days includes today plus the preceding six.
+
+STORAGE AND RETENTION
+The independent database stores recorded identities/covenant/group assignments,
+task definitions and progress/actions, category weekdays, window preferences,
+balance snapshots and activity sessions. It retains the newest 100 sessions,
+250 recent event details per session and up to 300 item/day/source groups per
+session. Quantity totals can survive detail limits; omitted prices stay unknown.
+Older sessions age out, so this addon is not an unlimited character-life archive.
+The Nexus archival pipeline is separate from those in-game retention limits.
+It does not import Journalator/My Loot History/Warband Accountant histories or
+migrate Folio notes and Planner reminders into tasks.
+
+TROUBLESHOOTING AND LIMITS
+Missing character/group: visit or import from an available optional roster;
+unvisited characters are unknown. A covenant rule only matches observed covenant
+data. Hidden task: inspect Today/category weekdays, scope, postponement and All
+tasks. Unknown reset: wait for actual API availability rather than changing data.
+Balance mismatch: look at each observation and incomplete interval; bank and
+wallet events need not arrive simultaneously. No gameplay is automated.
+The 0.4.0 preview has Lua 5.1 task/activity checks. Actual-client UI scale,
+reset/bank/loot event timing and combat behavior remain verification items.
+
+INSTALLATION, UPDATING AND DATA SAFETY
+Version in this bundle: 0.4.0. Documentation prepared October 24, 2026.
+Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+interface is not proof every path has been tested on that patch. This package
+does not claim Forever/Classic compatibility. Category: DuckMoo Media.
+
+Exit WoW before installing/updating. Extract the single DuckMooWarband folder into
+World of Warcraft/_retail_/Interface/AddOns/. Confirm DuckMooWarband/DuckMooWarband.toc
+is immediately inside AddOns, not inside another duplicate folder. Enable it in
+the AddOns screen for the characters you use, then log in. Follow any client
+out-of-date notice according to the actual patch; do not invent Interface values.
+
+The account-wide SavedVariable is DuckMooWarbandDB. WoW normally writes it to
+_retail_/WTF/Account/<ACCOUNT>/SavedVariables/DuckMooWarband.lua with a .lua.bak backup.
+The account/installation is the storage boundary; only observed characters are
+known. In-memory edits and captures persist on normal /reload or logout. A crash
+can lose changes since the last save. Back up the file while WoW is closed before
+manual maintenance. Updating addon files does not require deleting SavedVariables.
+Do not edit or restore them while the client is running: it can overwrite edits.
+Disable the addon to stop its collection/UI without deleting the saved database.
+Removing its AddOns folder alone does not erase the SavedVariables file.
+
+DATA LEAVING THE GAME
+Addon Lua does not make HTTP requests, send telemetry to a vendor or directly
+upload files. Nexus transfer, if configured for this addon, is a separate desktop
+process using independently managed credentials. Raw archives and normalized
+observations have separate retention. This ZIP contains source/runtime files,
+documentation and applicable license/notice only, never player databases or
+API/SSH credentials. Other addons' data and databases are not bundled.
+
+REPORTING A PROBLEM
+Include addon version, client build/locale, command/page, steps and exact error,
+plus whether the data was current or an offline snapshot. Inspect timestamps
+before treating missing data as zero. Share a minimal redacted sample only when
+needed; notes, names, character histories and credentials should stay private.

@@ -1,0 +1,125 @@
+DUCKMOO OMNI CAPTURE
+
+PURPOSE AND INDEPENDENCE
+An independent, timestamped character-data collector for Nexus. It has its own
+folder, SavedVariables, settings and lifecycle. DuckMooCapture remains the
+separate crafting-operation scanner; neither addon requires the other. Folio,
+Planner, Warband Nexus and WoWThing are not dependencies.
+
+FIRST USE
+Enable it, log into characters normally and play. Login and relevant events
+schedule observations after approximately three quiet seconds. Open each
+profession naturally to discover its knowledge/concentration identity. Save
+through normal /reload or logout; WoW writes SavedVariables at that point.
+No in-game collector can directly upload your file to Nexus. The separately
+installed Windows sync archives the saved file and submits it to the server.
+Website polling and the hosted crafting refresh then notice changed sources.
+
+COMMANDS
+/dmomni                  Print version, enabled/paused and queue/archive totals.
+/dmomni capture          Request a manual observation now.
+/dmomni off | on         Pause or resume collection.
+/dmomni events off | events on
+                         Disable or enable future lightweight journal events.
+Pausing preserves existing data. It is a collector with chat status, not a large
+in-game browsing window; Nexus is its principal viewing interface.
+
+SNAPSHOT SECTIONS
+Profile: GUID/identity, realm, class/race/faction, spec, level/XP/rested, average
+and equipped item levels, wallet money, zone/subzone/map, bind, guild, health,
+client build/interface/project/locale/region and observation time when available.
+Equipment: equipped slots 1-19, item IDs, links and textures exposed by the game.
+Inventory: carried bags including the reagent bag where available, capacity,
+free slots, item IDs/links/names, stack quantity, rarity, binding and icon IDs.
+It does not currently scan bank, warbank, mail or guild storage. Other Nexus
+sources can supply those locations independently.
+Currencies: visible currency rows, previously known IDs and event-discovered IDs,
+their returned amount/cap and other exposed properties. Undiscovered or collapsed
+currency coverage can be incomplete; an absent row does not establish zero.
+Vault: returned weekly reward activities/tracks, progress, example reward ilvl,
+reset time and available-reward indicator when exposed. Eligibility/API loading
+can leave it unknown; it does not open or claim a reward.
+Lockouts: saved instances, difficulty, expiry, boss names/kills and progress.
+Keystone: owned key level/map/name when readable, not a complete run history.
+Reputations: visible/previously observed factions, standing thresholds, renown
+and account-wide indicators. Unseen/collapsed factions can be absent.
+Quests: the game's completed quest IDs. Names and completion times only come
+from separate observations or API data, not guessed timestamps for old quests.
+Knowledge: the naturally opened profession's child skill ID, returned metadata,
+specialization tabs/nodes/currency information and concentration pool where
+exposed. A pool retains its own amount, cap, currency ID, rate and observation
+time. Known IDs refresh on later currency reads even with that profession closed;
+resource updates do not falsely advance the older trait observation timestamp.
+
+LIGHTWEIGHT EVENT JOURNAL
+Session start/end, observed level-ups, quest turn-ins (ID/title when returned,
+XP and quest money), self-loot messages, deaths, achievements and encounter
+results. Payloads and character/location context vary by event. Quest money is
+not a patron-order commission. There is no player-chat archive or combat-log
+stream, no complete movement trail and no guarantee every action is captured.
+At logout, the session end uses the last cached profile and its original sample
+time; shutdown APIs are not trusted to replace it with zero/empty snapshots.
+
+RETENTION AND NEXUS ACKNOWLEDGEMENTS
+Latest sections retain the last successful data and their timestamps when a
+read fails. Status/detail distinguish captured, partial and unavailable. Safe
+copy limits omit restricted/unsupported/deep/oversized data rather than executing
+it. A partial observation must not be interpreted as a complete account census.
+The unsent journal is capped at 10,000 events per character. At that limit new
+events pause and an overflow count increases; snapshots continue.
+
+Configured Windows sync writes a matching Acknowledgements.lua receipt only
+after Nexus confirms the exact archived source packet. At a later addon load,
+matching journal identity and event ID/time permit removal of just that confirmed
+prefix from the in-memory queue. Newer unsent events stay, sequence IDs increase,
+and local/server raw archives plus normalized event history remain separate.
+An absent/stale/mismatched receipt preserves the queue. A fresh download includes
+an empty acknowledgement stub: it must never contain another player's receipts.
+Updating the addon may replace a receipt with that empty stub; it does not erase
+SavedVariables, and confirmed sync can generate a fresh receipt later.
+
+TROUBLESHOOTING AND CURRENT STATUS
+Stale Nexus: check /dmomni is enabled, save normally, then inspect external sync.
+Missing knowledge/pool: open that profession and allow the API to load. Missing
+currency is unknown; a reported zero is valid. Full queue: inspect sync/receipt
+handling and reload after confirmation, rather than deleting the raw history.
+Actual Retail capture, logout preservation and acknowledged rotation have been
+observed. The new 0.1.4 pool-discovery path has focused mock checks but still
+awaits a fresh actual-client discovery/save. Preview is Retail only; Forever
+compatibility and Hardcore-specific life coverage are not claimed here.
+
+INSTALLATION, UPDATING AND DATA SAFETY
+Version in this bundle: 0.1.4. Documentation prepared October 24, 2026.
+Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+interface is not proof every path has been tested on that patch. This package
+does not claim Forever/Classic compatibility. Category: DuckMoo Media.
+
+Exit WoW before installing/updating. Extract the single DuckMooOmniCapture folder into
+World of Warcraft/_retail_/Interface/AddOns/. Confirm DuckMooOmniCapture/DuckMooOmniCapture.toc
+is immediately inside AddOns, not inside another duplicate folder. Enable it in
+the AddOns screen for the characters you use, then log in. Follow any client
+out-of-date notice according to the actual patch; do not invent Interface values.
+
+The account-wide SavedVariable is DuckMooOmniCaptureDB. WoW normally writes it to
+_retail_/WTF/Account/<ACCOUNT>/SavedVariables/DuckMooOmniCapture.lua with a .lua.bak backup.
+The account/installation is the storage boundary; only observed characters are
+known. In-memory edits and captures persist on normal /reload or logout. A crash
+can lose changes since the last save. Back up the file while WoW is closed before
+manual maintenance. Updating addon files does not require deleting SavedVariables.
+Do not edit or restore them while the client is running: it can overwrite edits.
+Disable the addon to stop its collection/UI without deleting the saved database.
+Removing its AddOns folder alone does not erase the SavedVariables file.
+
+DATA LEAVING THE GAME
+Addon Lua does not make HTTP requests, send telemetry to a vendor or directly
+upload files. Nexus transfer, if configured for this addon, is a separate desktop
+process using independently managed credentials. Raw archives and normalized
+observations have separate retention. This ZIP contains source/runtime files,
+documentation and applicable license/notice only, never player databases or
+API/SSH credentials. Other addons' data and databases are not bundled.
+
+REPORTING A PROBLEM
+Include addon version, client build/locale, command/page, steps and exact error,
+plus whether the data was current or an offline snapshot. Inspect timestamps
+before treating missing data as zero. Share a minimal redacted sample only when
+needed; notes, names, character histories and credentials should stay private.

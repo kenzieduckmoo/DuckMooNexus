@@ -1,3 +1,9 @@
+# v0.5.3
+
+- Correct cross-profession parent/child context handling without deleting historical observations.
+- Group the addon under DuckMoo Media and include a comprehensive USER-GUIDE.txt.
+- New context guards have focused mocked checks; actual client coverage remains separately documented.
+
 # v0.5.2
 
 - Enable top-level window behavior and render-layer flattening on main windows and standalone dialogs. This keeps child panels in their window's stacking group instead of interleaving with another DuckMoo window.

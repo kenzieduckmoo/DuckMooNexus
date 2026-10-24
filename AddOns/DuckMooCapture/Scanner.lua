@@ -3,7 +3,7 @@ local M, call = NS.Model, NS.Call
 local jobs, active, token = {}, nil, 0
 local CAP, QUERY_LIMIT = 256, 24000
 local BATCH, SLICE_MS = 8, 4
-local CACHE_VERSION=1
+local CACHE_VERSION=2
 local function encode(value)
     if type(value)~="table" then return tostring(value) end
     local keys={};for k in pairs(value) do keys[#keys+1]=k end
@@ -61,7 +61,7 @@ local function checkpoint(job, complete)
     if not complete and previous and not previous.partial then return end
     c.scannedRecipes[current.info.recipeID]={info=M.Copy(current.info),schematic=M.Copy(current.schematic),profession=M.Copy(current.profession),
         observedAt=GetServerTime(),outcomes=current.outcomes,combinations=math.min(#current.combinations,current.index-1),totalCombinations=current.total,
-        partial=not complete,limited=not complete or current.total>#current.combinations,unavailable=current.unavailable}
+        allocationMode="whole-slot-quality",partial=not complete,limited=not complete or current.total>#current.combinations,unavailable=current.unavailable}
 end
 
 local function context()
@@ -77,7 +77,7 @@ local function status(job, state)
         local now=GetTime and GetTime() or GetServerTime()
         if job.labelState==state and job.labelAt and now-job.labelAt<0.2 then return end
         job.labelState,job.labelAt=state,now
-        local progress=job.current and (" - "..(job.current.info.name or "Recipe").." "..math.min(job.current.index,#job.current.combinations).."/"..#job.current.combinations.." mixes") or ""
+        local progress=job.current and (" - "..(job.current.info.name or "Recipe").." "..math.min(job.current.index,#job.current.combinations).."/"..#job.current.combinations.." quality choices") or ""
         NS.ScannerLabel:SetText("Crafting Desk: "..state.." - "..job.saved.checked.."/"..job.saved.total.." recipes; "..job.saved.outcomes.." outcomes"..progress)
     end
 end
@@ -188,7 +188,7 @@ function NS.StartScanner(force)
         if not ids or #ids==0 then return end
         if changed then invalidate(c,professionID) end
         c.scanStatus=c.scanStatus or {}
-        local saved={total=#ids,checked=0,skipped=0,queries=0,outcomes=0,limited=0,unavailable=0,startedAt=GetServerTime(),combinationLimit=CAP,
+        local saved={total=#ids,checked=0,skipped=0,queries=0,outcomes=0,limited=0,unavailable=0,startedAt=GetServerTime(),combinationLimit=CAP,allocationMode="whole-slot-quality",
             starts=((job and job.saved.starts) or 0)+1,resetReason=changed and "Profession, build, recipe list or specialization changed" or force and "Requested refresh" or "Initial capture"}
         c.scanStatus[professionID]=saved
         job={ids=ids,index=1,professionID=professionID,saved=saved,stamp=stamp,cacheVersion=CACHE_VERSION,probes={}}

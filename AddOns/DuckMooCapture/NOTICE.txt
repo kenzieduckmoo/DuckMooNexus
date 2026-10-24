@@ -1,0 +1,5 @@
+DuckMoo Media - DuckMoo Capture
+No separate redistribution license is declared in this source tree. Copyright
+remains with the original author. Consult the official project distribution
+page for any subsequently declared license. This notice does not grant a new
+open-source license or change any existing rights.
