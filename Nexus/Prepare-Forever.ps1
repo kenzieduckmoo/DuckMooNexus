@@ -44,7 +44,7 @@ if(Test-Path -LiteralPath $configPath) {
  $config | Add-Member -NotePropertyName MinimumSavedAt -NotePropertyValue ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())
  $config | ConvertTo-Json | Set-Content -LiteralPath $configPath -Encoding UTF8
 }
-$action=New-ScheduledTaskAction -Execute "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -Argument ('-WindowStyle Hidden -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "'+(Join-Path $ForeverSync 'Sync-Nexus.ps1')+'"')
+$action=New-ScheduledTaskAction -Execute "$env:WINDIR\System32\wscript.exe" -Argument ('//B //Nologo "'+(Join-Path $ForeverSync 'Run-Hidden.vbs')+'"')
 $trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5) -RepetitionInterval (New-TimeSpan -Minutes 5)
 $principal=New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Limited
 $settings=New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 6) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
