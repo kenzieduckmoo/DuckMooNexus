@@ -71,3 +71,9 @@ required.
 ## Profession resource freshness follow-up — October 23, 2026
 
 R4/R5 now accept newer valid Omni concentration and opened-profession skill observations in the hosted model, matched by character GUID, child skill-line ID and concentration currency ID. Missing/older/invalid resources do not erase a valid earlier pool. New resources do not establish learned recipes or captured outcomes, and saved plans/setups are unchanged. Model refresh signature advanced to crafting-0.9.2. The first Omni journal rotation was observed in the actual client; the separate crafting scanner's live lifecycle gate remains outstanding. Profession-guide optimization remains paused.
+
+## Pre-Forever closeout — October 24, 2026
+
+Actual 0.9.0 whole-quality scans have completed and reached Nexus with unsplit reagent allocations and a recorded cache reuse. Omni 0.1.4's discovered concentration pools now agree between Professions and the hosted Crafting Desk. These are real source observations, distinct from a full controlled game-transition test or physical laptop confirmation.
+
+Fixed a model freshness race where raw archival could advance a global checkpoint before normalization finished. Signature crafting-0.9.3 tracks each relevant usable source/version; source labels exclude pending normalized imports while keeping committed raw-only TSM ownership usable. The actual refresh SQL passed a synthetic temporary-row PostgreSQL check, then the production image/model/service were updated. Saved plans/setups and source archives were preserved. Deeper guide optimization remains paused; no blanket RTM declaration replaces the documented external checks.

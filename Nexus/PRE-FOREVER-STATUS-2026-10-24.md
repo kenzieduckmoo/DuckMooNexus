@@ -23,10 +23,11 @@ The three newly created repositories are private. Existing repository visibility
 
 Prepared ZIPs are under `releases/curseforge-ready-2026-10-24/`. They are upload packages for the user, not a claim of publication on CurseForge or completion of every preview feature. Source and package checks do not establish unobserved client compatibility.
 
-## Remaining external checks and deliberately deferred work
+## Current live verification and remaining external checks
 
-- Normal-client validation of Crafting Capture 0.9.0 close/reopen/reload/context-change behavior.
-- Actual client capture/save of Omni 0.1.4's new concentration discovery and Folio/Planner 0.5.3 context guards. Earlier actual capture, logout preservation and acknowledged journal rotation were observed; newer path coverage must remain distinct.
+- Actual Crafting Capture 0.9.0 whole-quality scans have completed and reached PostgreSQL, including a recorded cache reuse. Captured whole-quality outcomes contain no within-slot split stacks. Exhaustive close/reopen/reload/combat/context-change behavior and actual timing remain separate client observations.
+- Actual Omni 0.1.4 concentration discovery/save has now been observed, with matching pools in Professions and Crafting Desk. Earlier logout preservation and acknowledged journal rotation were also observed. Folio/Planner context-transition edge cases remain separate from ordinary successful captures.
+- Fixed the remaining crafting refresh race: a pending raw archive cannot mask the later completion of its normalized import. Source labels now identify usable data. See `CRAFTING-FRESHNESS-2026-10-24.md`.
 - Actual laptop save/page-refresh confirmation. Hosted saved-choice persistence and the page loading were checked, but those are separate evidence.
 - Weekday advice needs more automatically accumulated history. A waiting evidence gate is not unfinished implementation.
 - Forever-specific client access and capture validation wait until November 4. Hardcore character-life coverage must be ready before the expected January/February start; its exact date remains unannounced in the project brief.

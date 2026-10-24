@@ -84,8 +84,8 @@ Missing knowledge/pool: open that profession and allow the API to load. Missing
 currency is unknown; a reported zero is valid. Full queue: inspect sync/receipt
 handling and reload after confirmation, rather than deleting the raw history.
 Actual Retail capture, logout preservation and acknowledged rotation have been
-observed. The new 0.1.4 pool-discovery path has focused mock checks but still
-awaits a fresh actual-client discovery/save. Preview is Retail only; Forever
+observed. The 0.1.4 pool-discovery path has now been observed in actual client saves,
+with matching resource amounts and timestamps in Nexus Professions and Crafting Desk. Preview is Retail only; Forever
 compatibility and Hardcore-specific life coverage are not claimed here.
 
 INSTALLATION, UPDATING AND DATA SAFETY

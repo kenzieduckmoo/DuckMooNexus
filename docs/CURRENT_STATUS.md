@@ -9,9 +9,11 @@ The native Nexus website is deployed on the private server with Overview, named-
 - Comprehensive USER-GUIDE.txt documents bundled with six individual CurseForge upload ZIPs. Every owned TOC uses DuckMoo Media. Current source, guides and category are uploaded to each addon's individual GitHub repository, with older remote history and unrelated files retained. The three new collector/planner repositories are private; existing visibility remains unchanged.
 - Existing installed addons have the guides/category updates. Fia's current repository version 0.1.2 replaces the older installed copy. Original files were backed up; player SavedVariables and Omni receipts were not rewritten.
 
+The final crafting freshness race is fixed: the model tracks completed usable source imports instead of the largest raw archive ID. Deployment and actual observation agreement are recorded in Nexus/CRAFTING-FRESHNESS-2026-10-24.md.
+
 ## Remaining checks and future work
 
-Actual-client Capture 0.9.0 scanner close/reopen/reload/context behavior, Omni 0.1.4 concentration discovery, and Folio/Planner 0.5.3 context guards remain distinct from mock/source checks. Actual-client earlier Omni capture, logout preservation and acknowledged journal rotation have been observed. Laptop page loading and hosted persistence were checked; the user's actual laptop save/refresh remains a separate gate.
+Actual Capture 0.9.0 completed whole-quality scans and cached reuse have now been observed, along with Omni 0.1.4 concentration discovery and matching hosted resource observations. Full controlled game transitions and Folio/Planner context edge cases remain separate client checks. Actual-client earlier Omni capture, logout preservation and acknowledged journal rotation have been observed. Laptop page loading and hosted persistence were checked; the user's actual laptop save/refresh remains a separate gate.
 
 Weekday buying patterns await enough automatically accumulated history. Forever-specific game access and verification wait until November 4. Hardcore life capture must be ready before the expected January/February start; exact date remains unannounced in the project brief. Deeper profession-guide optimization remains paused. The entire long-term Nexus vision is not declared complete by this checkpoint.
 

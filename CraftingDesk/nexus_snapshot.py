@@ -24,7 +24,9 @@ def build(conn):
     data={'DuckMooFolio':{'DuckMooFolioDB':{'characters':{}}},'DuckMooPlanner':{'DuckMooPlannerDB':{'characters':{}}}}
     sources=[]
     latest=conn.execute('''SELECT DISTINCT ON(source) id,source,source_saved_at,captured_at
-      FROM nexus.source_snapshots WHERE namespace=%s ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC''',(ACCOUNT,)).fetchall()
+      FROM nexus.source_snapshots WHERE namespace=%s
+      AND (source='TradeSkillMaster.lua' OR normalized_version IS NOT NULL)
+      ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC''',(ACCOUNT,)).fetchall()
     for row in latest:
         if row['source'] in ('DuckMooCapture.lua','DuckMooFolio.lua','DuckMooPlanner.lua','DuckMooOmniCapture.lua','Syndicator.lua','TSM_AppData.lua','Auctionator.lua'):
             sources.append({'name':row['source'].removesuffix('.lua'),'snapshotId':row['id'],
@@ -114,7 +116,20 @@ def _refresh(folder):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
     with psycopg.connect(os.environ['DATABASE_URL'],row_factory=dict_row) as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
-        signature=conn.execute("SELECT json_build_array('crafting-0.9.2',(SELECT max(id) FROM nexus.source_snapshots),(SELECT max(id) FROM nexus.api_snapshots)) AS signature").fetchone()['signature']
+        # Archiving commits before normalization. Track each usable source,
+        # rather than a global raw max(id), so a finishing import cannot be
+        # hidden behind a newer archive or unrelated source. TSM ownership is
+        # intentionally raw-only and its committed archive is immediately usable.
+        signature=conn.execute('''WITH latest AS (
+          SELECT DISTINCT ON(source) source,id,normalized_version
+          FROM nexus.source_snapshots WHERE namespace=%s
+          AND source IN('TradeSkillMaster.lua','DuckMooCapture.lua','DuckMooFolio.lua','DuckMooPlanner.lua',
+            'DuckMooOmniCapture.lua','Syndicator.lua','TSM_AppData.lua','Auctionator.lua')
+          AND (source='TradeSkillMaster.lua' OR normalized_version IS NOT NULL)
+          ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC)
+          SELECT json_build_array('crafting-0.9.3',
+            (SELECT json_agg(json_build_array(source,id,normalized_version) ORDER BY source) FROM latest),
+            (SELECT max(id) FROM nexus.api_snapshots WHERE region='us')) AS signature''',(ACCOUNT,)).fetchone()['signature']
         checkpoint=folder/'source-signature.json'
         if checkpoint.exists() and json.loads(checkpoint.read_text())==signature and (folder/'local-data.json.gz').exists():return False
         model=build(conn)

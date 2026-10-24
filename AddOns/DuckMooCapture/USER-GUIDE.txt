@@ -81,8 +81,9 @@ display issue. Back up first and investigate the actual coverage/context.
 
 CURRENT VERIFICATION AND REMAINING WORK
 Real crafting data has been captured and imported. Mocked Lua checks cover the
-scanner/cache changes, and focused importer checks have passed. The full 0.9.0
-real-game open/close/reload/context-change lifecycle remains an explicit check;
+scanner/cache changes, and focused importer checks have passed. Completed 0.9.0 whole-quality scans, unsplit allocations and cached reuse have
+now been observed in actual saves reaching Nexus. A controlled full
+open/close/reload/combat/context-change check and timing remain separate;
 no claim of complete CraftSim-equivalent economics is made.
 
 INSTALLATION, UPDATING AND DATA SAFETY
