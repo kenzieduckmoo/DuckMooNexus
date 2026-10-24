@@ -1,0 +1,11 @@
+# Omni Capture acknowledged rotation — October 23, 2026
+
+Version 0.1.3 adds a durable event-journal receipt bridge. The normal Windows sync already receives Nexus commit confirmations. After a successful source sync, it passes only confirmed packet identities to `app/write_omni_ack.py`. That helper reads the primary Omni source from the exact archived packet, validates a bounded contiguous event queue and writes an atomic Lua receipt into the existing installed addon. It never reads newer live SavedVariables as proof of receipt and never edits SavedVariables.
+
+At the next addon load, a matching journal identity and event ID/time allow removal of the confirmed prefix from the in-memory queue. Newer events stay. Monotonic event IDs continue, and counters distinguish queued, archived and overflow events. All raw snapshots stay in the desktop/server archives and existing PostgreSQL event history remains queryable. A new character/history gets a new journal identity; old receipts cannot clear it. A missing, stale or inconsistent receipt leaves the queue intact. Receipt-update failure is reported separately and does not block unrelated source syncs.
+
+The first load assigns journal identities, the following normal save/sync can generate confirmations, and a later load can consume them. This version still caps each unconfirmed queue at 10,000 events and counts dropped overflow. It is not complete gameplay capture or an unlimited offline recorder.
+
+Focused verification: a synthetic archive -> generated Lua -> addon rotation check covers unconfirmed packets, stale identities, bad timestamp/sequence markers, journal gaps, newer unsent events and replayed receipts. Existing capture/lifecycle checks passed, and PowerShell parsing passed. The installed Windows sync completed successfully with the bridge; current older saves have no journal identity and therefore authorize no pruning. Version 0.1.3 and a preview ZIP are installed/built. Actual client receipt consumption awaits the normal load/save/sync/load cycle.
+
+New real 0.1.2 saves have independently confirmed cached logout profiles in the actual client. Character-specific evidence stays local; this document contains source/protocol details only.

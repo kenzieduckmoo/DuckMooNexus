@@ -33,6 +33,7 @@ try {
         $known = Invoke-SyncSsh -Config $config -Command 'receipts' -InputFile $queryPath | ConvertFrom-Json
         foreach ($digest in $known.committed) { [void]$committed.Add([string]$digest) }
     }
+    $previouslyCommitted = $committed.Count
     $count = 0
     foreach ($packet in $packets) {
         if ($committed.Contains([string]$packet.hash)) { continue }
@@ -40,11 +41,24 @@ try {
         if ($receipt.sha256 -ne $packet.hash -or $receipt.status -notin @('imported','already_imported','archived')) {
             throw "Server did not commit packet $($packet.hash)"
         }
+        [void]$committed.Add([string]$packet.hash)
         $count++
     }
-    @{ success=$true; at=[DateTime]::UtcNow.ToString('o'); packets=$count; alreadyCommitted=$committed.Count } |
+    # Give the independent addon only receipts backed by this run's server ACKs.
+    # A receipt problem must retain the local journal, not fail other source syncs.
+    $omniAck = @{ status='not_attempted' }
+    try {
+        [IO.File]::WriteAllText((Join-Path $state 'omni-committed-packets.json'), (ConvertTo-Json -InputObject @($committed) -Compress), (New-Object Text.UTF8Encoding($false)))
+        $ackOutput = & $config.Python (Join-Path $scriptDirectory 'app\write_omni_ack.py') $config.SavedVariables $state 2> (Join-Path $state 'omni-ack-error.log')
+        if ($LASTEXITCODE -ne 0) { throw 'Omni receipt update failed; local journal retained.' }
+        $omniAck = ConvertFrom-Json -InputObject ($ackOutput -join "`n")
+    } catch {
+        $omniAck = @{ status='retained'; error=$_.ToString() }
+        Add-Content -LiteralPath (Join-Path $state 'sync.log') -Value "$([DateTime]::UtcNow.ToString('o')) Omni receipt deferred; local journal retained"
+    }
+    @{ success=$true; at=[DateTime]::UtcNow.ToString('o'); packets=$count; alreadyCommitted=$previouslyCommitted; omniAck=$omniAck } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $state 'last-result.json') -Encoding UTF8
-    Add-Content -LiteralPath (Join-Path $state 'sync.log') -Value "$([DateTime]::UtcNow.ToString('o')) OK $count packets uploaded; $($committed.Count) already committed"
+    Add-Content -LiteralPath (Join-Path $state 'sync.log') -Value "$([DateTime]::UtcNow.ToString('o')) OK $count packets uploaded; $previouslyCommitted already committed"
 } catch {
     $message = $_.ToString()
     @{ success=$false; at=[DateTime]::UtcNow.ToString('o'); error=$message } |

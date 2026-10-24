@@ -1,5 +1,24 @@
 local _, O = ...
-O.version = "0.1.2"
+O.version = "0.1.3"
+function O.PrepareJournal(guid,c)
+    c.events=c.events or {};c.sequence=c.sequence or 0
+    -- A new SavedVariables history must never inherit an older history's receipt.
+    c.journalID=c.journalID or guid..":"..GetServerTime()..":"..math.random(1,1000000000)
+    local receipts=O.acknowledgements
+    local ack=type(receipts)=="table" and receipts.schema==1 and type(receipts.characters)=="table" and receipts.characters[guid]
+    if type(ack)~="table" or ack.journalID~=c.journalID or type(ack.through)~="number" or ack.through>c.sequence then return end
+    local matched=false
+    for _,event in ipairs(c.events) do
+        if event.id==ack.through and event.at==ack.at then matched=true;break end
+    end
+    if not matched then return end
+    local retained={};local removed=0
+    for _,event in ipairs(c.events) do
+        if event.id>ack.through then retained[#retained+1]=event else removed=removed+1 end
+    end
+    c.events=retained;c.archivedEvents=(c.archivedEvents or 0)+removed
+    c.acknowledgedThrough=ack.through;c.acknowledgedAt=GetServerTime()
+end
 function O.Safe(value, depth, seen, budget)
     if issecretvalue and issecretvalue(value) then return nil end
     local kind = type(value)
@@ -42,13 +61,14 @@ function O.Init()
     O.db=DuckMooOmniCaptureDB
     O.db.settings=O.db.settings or {enabled=true,events=true}
     O.db.characters=O.db.characters or {}
+    for guid,c in pairs(O.db.characters) do O.PrepareJournal(guid,c) end
 end
 function O.Character()
     if not O.db or not O.db.settings.enabled then return nil end
     local guid=O.Call(UnitGUID,"player")
     if not guid then return nil end
     local c=O.db.characters[guid]
-    if not c then c={guid=guid,sections={},events={},sequence=0,droppedEvents=0};O.db.characters[guid]=c end
+    if not c then c={guid=guid,sections={},events={},sequence=0,droppedEvents=0};O.db.characters[guid]=c;O.PrepareJournal(guid,c) end
     c.name=O.Call(UnitName,"player");c.realm=O.Call(GetRealmName)
     return c
 end
@@ -70,5 +90,5 @@ function O.Event(kind, payload)
     -- Never silently overwrite unsent history. Surface the overflow count.
     if #c.events>=10000 then c.droppedEvents=c.droppedEvents+1;if c.droppedEvents==1 then print("DuckMoo Omni Capture: event journal full. New events paused; snapshots continue. Existing history has been preserved.") end;return end
     c.sequence=c.sequence+1
-    c.events[#c.events+1]={id=c.sequence,kind=kind,at=GetServerTime(),data=O.Safe(payload)}
+    c.events[#c.events+1]={id=c.sequence,journalID=c.journalID,kind=kind,at=GetServerTime(),data=O.Safe(payload)}
 end

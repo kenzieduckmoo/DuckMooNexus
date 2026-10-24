@@ -64,5 +64,5 @@ SlashCmdList.DUCKMOOOMNI=function(text)
     elseif text=="events on" then O.db.settings.events=true
     elseif text=="capture" then O.Scan("manual") end
     local c=O.Character()
-    print("DuckMoo Omni Capture "..O.version..": "..(O.db.settings.enabled and "enabled" or "paused")..". Events retained: "..(c and #c.events or 0).."; overflow: "..(c and c.droppedEvents or 0)..". /dmomni on | off | capture | events on | events off")
+    print("DuckMoo Omni Capture "..O.version..": "..(O.db.settings.enabled and "enabled" or "paused")..". Events queued: "..(c and #c.events or 0).."; archived: "..(c and c.archivedEvents or 0).."; overflow: "..(c and c.droppedEvents or 0)..". /dmomni on | off | capture | events on | events off")
 end
