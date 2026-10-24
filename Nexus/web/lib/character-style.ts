@@ -8,5 +8,5 @@ export function characterSort(a:RosterCharacter,b:RosterCharacter){
  return Number(main(b))-Number(main(a))||numeric(b.level)-numeric(a.level)||numeric(b.item_level)-numeric(a.item_level)||a.name.localeCompare(b.name)||String(a.realm??'').localeCompare(String(b.realm??''));
 }
 export function asset(media:unknown,key:string){return Array.isArray(media)?media.find(a=>a.key===key)?.value??null:null;}
-export function gameText(value:unknown):string{return String(value??'').replace(/\|c[0-9a-fA-F]{8}|\|r/g,'').replace(/\|A:.*?\|a|\|T.*?\|t/g,'').replace(/\|H[^|]*\|h([^|]*)\|h/g,'$1').trim();}
+export function gameText(value:unknown):string{return String(value??'').replace(/\|c[0-9a-fA-F]{8}|\|cn[A-Za-z0-9_]+:|\|r/g,'').replace(/\|A:.*?\|a|\|T.*?\|t/g,'').replace(/\|H[^|]*\|h([^|]*)\|h/g,'$1').trim();}
 export function values(value:unknown):any[]{return Array.isArray(value)?value:value&&typeof value==='object'?Object.values(value):[];}

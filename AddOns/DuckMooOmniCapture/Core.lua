@@ -19,7 +19,17 @@ frame:SetScript("OnEvent",function(_,event,...)
     if event=="PLAYER_LEAVING_WORLD" then O.loading=true;return
     elseif event=="PLAYER_ENTERING_WORLD" then O.loading=false;O.Schedule();return
     elseif O.shuttingDown then return
+    elseif event=="BANKFRAME_OPENED" then O.bankOpen=true;O.Schedule("storage");return
+    elseif event=="BANKFRAME_CLOSED" then O.bankOpen=false;return
+    elseif event=="MAIL_SHOW" then O.mailOpen=true;O.Schedule("storage");return
+    elseif event=="MAIL_CLOSED" then O.mailOpen=false;return
+    elseif event=="GUILDBANKFRAME_OPENED" then O.guildOpen=true;O.Schedule("storage");return
+    elseif event=="GUILDBANKFRAME_CLOSED" then O.guildOpen=false;return
+    elseif event=="MAIL_INBOX_UPDATE" or event=="PLAYERBANKSLOTS_CHANGED" or event=="PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED" or event=="GUILDBANKBAGSLOTS_CHANGED" then O.Schedule("storage");return
+    elseif event=="QUEST_LOG_UPDATE" then O.Schedule("activities");return
+    elseif event=="COMPANION_LEARNED" or event=="NEW_TOY_ADDED" or event=="PET_JOURNAL_LIST_UPDATE" then O.collectionsDirty=true;O.Schedule("collections");return
     elseif event=="PLAYER_LOGIN" then
+        local c=O.Character();if c and O.Call(UnitIsDeadOrGhost,"player")==false then c.deathOpen=false end
         O.Event("session_start",O.Profile());O.Call(RequestRaidInfo);O.Call(C_MythicPlus and C_MythicPlus.RequestMapInfo);O.Call(C_WeeklyRewards and C_WeeklyRewards.OnUIInteract);O.Schedule()
     elseif event=="PLAYER_LOGOUT" then
         -- Logout APIs can already report zero money/item level and empty bags.
@@ -29,10 +39,10 @@ frame:SetScript("OnEvent",function(_,event,...)
         local c=O.Character();local profile=c and c.sections.profile
         O.Event("session_end",{profile=profile and profile.data,profileObservedAt=profile and profile.observedAt,cached=true})
     elseif event=="PLAYER_LEVEL_UP" then
-        O.Event("level",{level=O.Safe((...))});O.Schedule("profile")
+        O.Level(O.Safe((...)));O.Schedule("profile")
     elseif event=="QUEST_TURNED_IN" then
         local questID,xp,money=O.Safe((select(1,...))),O.Safe((select(2,...))),O.Safe((select(3,...)))
-        O.Event("quest_completed",{questID=questID,name=O.Call(C_QuestLog and C_QuestLog.GetTitleForQuestID,questID),xp=xp,money=money});O.Schedule("profile quests")
+        O.Event("quest_completed",{questID=questID,name=O.Call(C_QuestLog and C_QuestLog.GetTitleForQuestID,questID),xp=xp,money=money});O.Schedule("profile quests activities")
     elseif event=="CHAT_MSG_LOOT" then
         local text,_,_,_,_,_,_,_,_,_,_,guid=...
         if O.Safe(guid)==O.Call(UnitGUID,"player") then O.Event("loot",{message=O.Safe(text)}) end
@@ -40,7 +50,8 @@ frame:SetScript("OnEvent",function(_,event,...)
         local id,label,difficulty,size,success=...
         O.Event("encounter",{id=O.Safe(id),name=O.Safe(label),difficulty=O.Safe(difficulty),groupSize=O.Safe(size),success=O.Safe(success)})
         O.Schedule("profile vault lockouts keystone")
-    elseif event=="PLAYER_DEAD" then O.Event("death",O.Profile())
+    elseif event=="PLAYER_DEAD" then O.Death()
+    elseif event=="PLAYER_ALIVE" or event=="PLAYER_UNGHOST" then local c=O.Character();if c then c.deathOpen=false end
     elseif event=="ACHIEVEMENT_EARNED" then
         O.Event("achievement",{id=O.Safe((...))})
     elseif refresh[event] then
@@ -53,7 +64,7 @@ frame:SetScript("OnEvent",function(_,event,...)
         O.Schedule(sections[event])
     end
 end)
-for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","PLAYER_LOGOUT","PLAYER_LEAVING_WORLD","PLAYER_LEVEL_UP","QUEST_TURNED_IN","CHAT_MSG_LOOT","PLAYER_DEAD","ACHIEVEMENT_EARNED","ENCOUNTER_END"}) do pcall(frame.RegisterEvent,frame,event) end
+for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","PLAYER_LOGOUT","PLAYER_LEAVING_WORLD","PLAYER_LEVEL_UP","QUEST_TURNED_IN","CHAT_MSG_LOOT","PLAYER_DEAD","PLAYER_ALIVE","PLAYER_UNGHOST","BANKFRAME_OPENED","BANKFRAME_CLOSED","MAIL_SHOW","MAIL_CLOSED","GUILDBANKFRAME_OPENED","GUILDBANKFRAME_CLOSED","MAIL_INBOX_UPDATE","PLAYERBANKSLOTS_CHANGED","PLAYER_ACCOUNT_BANK_TAB_SLOTS_CHANGED","GUILDBANKBAGSLOTS_CHANGED","QUEST_LOG_UPDATE","COMPANION_LEARNED","NEW_TOY_ADDED","PET_JOURNAL_LIST_UPDATE","ACHIEVEMENT_EARNED","ENCOUNTER_END"}) do pcall(frame.RegisterEvent,frame,event) end
 for event in pairs(refresh) do pcall(frame.RegisterEvent,frame,event) end
 SLASH_DUCKMOOOMNI1="/dmomni"
 SlashCmdList.DUCKMOOOMNI=function(text)
@@ -62,7 +73,9 @@ SlashCmdList.DUCKMOOOMNI=function(text)
     elseif text=="on" then O.db.settings.enabled=true;O.Schedule()
     elseif text=="events off" then O.db.settings.events=false
     elseif text=="events on" then O.db.settings.events=true
-    elseif text=="capture" then O.Scan("manual") end
+    elseif text=="capture" then O.collectionsDirty=true;O.Scan("manual")
+    elseif text=="hardcore on" then O.LifeMode(true)
+    elseif text=="hardcore off" then O.LifeMode(false) end
     local c=O.Character()
-    print("DuckMoo Omni Capture "..O.version..": "..(O.db.settings.enabled and "enabled" or "paused")..". Events queued: "..(c and #c.events or 0).."; archived: "..(c and c.archivedEvents or 0).."; overflow: "..(c and c.droppedEvents or 0)..". /dmomni on | off | capture | events on | events off")
+    print("DuckMoo Omni Capture "..O.version..": "..(O.db.settings.enabled and "enabled" or "paused")..". Events queued: "..(c and #c.events or 0).."; archived: "..(c and c.archivedEvents or 0).."; overflow: "..(c and c.droppedEvents or 0)..". /dmomni on | off | capture | events on | events off | hardcore on | hardcore off")
 end

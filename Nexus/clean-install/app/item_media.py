@@ -9,7 +9,7 @@ def enrich_media(conn,region,bearer,limit=40):
     ids=conn.execute('''SELECT DISTINCT c.item_id,
       CASE WHEN c.name ILIKE ANY(ARRAY['%%Eversinging%%','%%Mote of Light%%','%%Phoenix Oil%%']) THEN 0 ELSE 1 END AS priority
       FROM nexus.item_catalog c LEFT JOIN nexus.api_item_metadata m ON m.region=%s AND m.item_id=c.item_id
-      WHERE NOT coalesce(m.payload ? '_nexus_media_checked',false)
+      WHERE c.namespace='retail-main-account' AND NOT coalesce(m.payload ? '_nexus_media_checked',false)
       ORDER BY priority,c.item_id DESC LIMIT %s''',(region,limit)).fetchall()
     count=0
     for item_id,_ in ids:

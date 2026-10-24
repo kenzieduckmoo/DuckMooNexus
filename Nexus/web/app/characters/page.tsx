@@ -1,3 +1,3 @@
 import {CharacterDirectory} from '@/components/character-directory';
 export const metadata={title:'Character sheets'};
-export default function Page(){return <CharacterDirectory/>;}
+export default async function Page({searchParams}:{searchParams:Promise<{client?:string}>}){const q=await searchParams,client=q.client==='forever'?'forever':'retail';return <CharacterDirectory key={client} client={client}/>;}

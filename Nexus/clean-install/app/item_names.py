@@ -6,13 +6,13 @@ from psycopg.types.json import Jsonb
 
 
 def enrich(conn,region,bearer,limit=200):
-    # API items are global per region; duplicate account evidence is intentional.
-    namespaces=[r[0] for r in conn.execute('SELECT DISTINCT namespace FROM nexus.source_snapshots')]
+    # This API worker uses Retail static/dynamic namespaces; never seed Forever.
+    namespaces=[r[0] for r in conn.execute("SELECT DISTINCT namespace FROM nexus.source_snapshots WHERE namespace='retail-main-account'")]
     # A name from an addon, or an icon-only API row, is not complete item
     # metadata. Prioritize personal purchases, then fill the market catalog.
     ids=conn.execute('''WITH bought AS (
        SELECT item_id,count(*) AS purchases FROM nexus.transactions
-       WHERE category='Invoices' AND subtype='buyer' AND item_id IS NOT NULL
+       WHERE namespace='retail-main-account' AND category='Invoices' AND subtype='buyer' AND item_id IS NOT NULL
        AND occurred_at>=now()-interval '90 days' AND occurred_at<=now() GROUP BY item_id),
        candidates AS (SELECT DISTINCT a.item_id FROM nexus.latest_api_snapshots s
        JOIN nexus.auction_listings a ON a.snapshot_id=s.id WHERE s.region=%s

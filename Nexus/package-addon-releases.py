@@ -8,7 +8,7 @@ for name in ('DuckMooCapture','DuckMooFolio','DuckMooPlanner','DuckMooWarband','
  addon=root/'AddOns'/name;toc=addon/(name+'.toc');text=toc.read_text(encoding='utf-8-sig')
  assert re.findall(r'^## Category:.*$',text,re.M)==['## Category: DuckMoo Media']
  version=re.search(r'^## Version:\s*(\S+)',text,re.M)[1]
- files={toc,addon/'USER-GUIDE.txt'}
+ files={toc,addon/'USER-GUIDE.txt',*addon.glob('*_Camelot.toc')}
  runtime=[x.strip().replace('\\','/') for x in text.splitlines() if x.strip() and not x.lstrip().startswith('#')]
  for entry in runtime:
   p=(addon/entry).resolve();assert p.is_relative_to(addon.resolve()) and p.is_file(),entry;files.add(p)

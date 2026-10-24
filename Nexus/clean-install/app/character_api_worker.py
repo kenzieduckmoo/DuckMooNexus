@@ -51,7 +51,7 @@ def run(region='us',limit=8):
           ), candidates AS(SELECT DISTINCT ON(namespace,character_guid) * FROM identities ORDER BY namespace,character_guid,last_seen DESC NULLS LAST)
           SELECT c.namespace,c.character_guid,c.name,c.realm,c.last_seen FROM candidates c
           LEFT JOIN nexus.character_api_refresh r ON r.namespace=c.namespace AND r.character_guid=c.character_guid
-          WHERE r.next_attempt IS NULL OR r.next_attempt<=now() OR c.last_seen>r.last_addon_seen
+          WHERE c.namespace='retail-main-account' AND (r.next_attempt IS NULL OR r.next_attempt<=now() OR c.last_seen>r.last_addon_seen)
           ORDER BY (r.next_attempt IS NULL) DESC,c.last_seen DESC NULLS LAST,c.name LIMIT %s''',(limit,)).fetchall()
         if not jobs:return
         bearer=token()

@@ -9,9 +9,12 @@ from bundle import create_bundle
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('savedvariables',type=Path);p.add_argument('state',type=Path)
-    p.add_argument('--tsm-appdata',type=Path);a=p.parse_args()
+    p.add_argument('--tsm-appdata',type=Path);p.add_argument('--namespace',choices=['retail-main-account','forever-main-account'],default='retail-main-account');p.add_argument('--minimum-saved-at',type=float,default=0);a=p.parse_args()
     a.state.mkdir(parents=True,exist_ok=True)
     queue=a.state/'packets';queue.mkdir(exist_ok=True)
+    binding=a.state/'namespace.txt'
+    if binding.exists() and binding.read_text().strip()!=a.namespace:raise ValueError('State directory belongs to another client namespace')
+    if not binding.exists():binding.write_text(a.namespace)
     if not a.savedvariables.is_dir():
         raise ValueError('SavedVariables directory does not exist')
     sources=[(a.savedvariables/(name+suffix),name+'.lua') for name in SOURCES if name != 'TSM_AppData'
@@ -22,7 +25,7 @@ def main():
     for path,name in sources:
         if not path.exists():continue
         info=path.stat()
-        if time.time()-info.st_mtime<15:continue
+        if info.st_mtime<a.minimum_saved_at or time.time()-info.st_mtime<15:continue
         fingerprint=[info.st_size,info.st_mtime_ns]
         key=str(path.resolve())
         old=previous.get(key,{})
@@ -36,7 +39,7 @@ def main():
             digest=create_bundle(Path(old['manifest']),staging)
             staging.replace(queue/(digest+'.bundle'))
             continue
-        manifest=capture(path,a.state/'archives','retail-main-account',source_name=name)
+        manifest=capture(path,a.state/'archives',a.namespace,source_name=name)
         manifests=[x for x in (a.state/'archives').glob(manifest['sha256']+'-*.json')
                    if json.loads(x.read_text())['source']==name]
         # Select the manifest for this source save, not an earlier same-content save.

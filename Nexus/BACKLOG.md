@@ -26,3 +26,7 @@ Status: prepared and uploaded October 24, 2026 for the current pre-Forever check
 ## Profession guides
 
 Resumed and delivered October 24: native route choices/progress saved on Nexus, next-batch shopping, stable checkmarks, vendor exclusions and observed recipe alternatives. See PROFESSION-GUIDES-2026-10-24.md. Unknown acquisition prices, random yields and additional expansion/client evidence remain explicit data gates; no claim of globally optimal routing.
+
+## Forever and expanded Omni preparation
+
+Delivered October 24: client-specific Omni TOC/install, independent first-save-gated Forever sync/receipts/namespace, separate character sheets, Adventure Journal with archived-history paging, explicit life-mode/death summaries, partial visited storage, collection and active-quest capture. See FOREVER-READY-2026-10-24.md. Remaining evidence gates are actual updated-client observations, Forever access and actual Hardcore rules/events. Exhaustive appearances/achievement criteria, hidden/unaccepted weekly tasks and verified killer attribution are not represented as captured.

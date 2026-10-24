@@ -4,6 +4,8 @@ The native Nexus website is deployed on the private server with Overview, named-
 
 ## Latest completed work
 
+- Omni 0.2.0 installed for Retail and Forever, independent Forever sync/namespace, native Adventure Journal, separate Forever character sheets, life summaries, collections, active quests and visited storage observations. Retail API workers are client-scoped. See Nexus/FOREVER-READY-2026-10-24.md for verification and remaining client gates.
+
 - Reagent buying advisor at `/auctions/buying`: recurring commodity purchases, current price, separate quality cards, recorded stock, conditional 7/14-day top-ups and evidence-gated weekday patterns. Item API enrichment now fills classifications even for items already named by addon data and preserves cached icons.
 - Character history retains the newest bounded API observations before chronological display; fixed history text encoding. All retained Folio/Planner/Omni source archives inspected at this checkpoint were normalized already, so no replay was needed.
 - Comprehensive USER-GUIDE.txt documents bundled with six individual CurseForge upload ZIPs. Every owned TOC uses DuckMoo Media. Current source, guides and category are uploaded to each addon's individual GitHub repository, with older remote history and unrelated files retained. The three new collector/planner repositories are private; existing visibility remains unchanged.

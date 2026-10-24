@@ -13,7 +13,7 @@ from importer import ingest
 
 def import_packet(conn, packet):
     with tempfile.TemporaryDirectory() as tmp:
-        _, manifest = unpack_bundle(packet, tmp)
+        _, manifest = unpack_bundle(packet, tmp, namespace=None)
         archive = Path(tmp) / (manifest['sha256'] + '.lua.gz')
         result = ingest_source(conn, archive, manifest)
         if manifest['source'] == 'Journalator.lua':

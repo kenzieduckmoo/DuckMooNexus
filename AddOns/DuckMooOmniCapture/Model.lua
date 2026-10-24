@@ -1,5 +1,5 @@
 local _, O = ...
-O.version = "0.1.4"
+O.version = "0.2.0"
 function O.PrepareJournal(guid,c)
     c.events=c.events or {};c.sequence=c.sequence or 0
     -- A new SavedVariables history must never inherit an older history's receipt.
@@ -45,12 +45,12 @@ function O.Safe(value, depth, seen, budget)
 end
 function O.Call(fn, ...)
     if type(fn)~="function" then return nil end
-    local ok,a,b,c,d,e,f,g,h = pcall(fn,...)
+    local ok,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p = pcall(fn,...)
     if ok then
         local budget={remaining=50000,omitted=0}
-        a,b,c,d,e,f,g,h=O.Safe(a,0,{},budget),O.Safe(b,0,{},budget),O.Safe(c,0,{},budget),O.Safe(d,0,{},budget),O.Safe(e,0,{},budget),O.Safe(f,0,{},budget),O.Safe(g,0,{},budget),O.Safe(h,0,{},budget)
+        a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p=O.Safe(a,0,{},budget),O.Safe(b,0,{},budget),O.Safe(c,0,{},budget),O.Safe(d,0,{},budget),O.Safe(e,0,{},budget),O.Safe(f,0,{},budget),O.Safe(g,0,{},budget),O.Safe(h,0,{},budget),O.Safe(i,0,{},budget),O.Safe(j,0,{},budget),O.Safe(k,0,{},budget),O.Safe(l,0,{},budget),O.Safe(m,0,{},budget),O.Safe(n,0,{},budget),O.Safe(o,0,{},budget),O.Safe(p,0,{},budget)
         if budget.omitted>0 then O.readLimited=true end
-        return a,b,c,d,e,f,g,h
+        return a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p
     end
 end
 function O.Init()
@@ -90,5 +90,6 @@ function O.Event(kind, payload)
     -- Never silently overwrite unsent history. Surface the overflow count.
     if #c.events>=10000 then c.droppedEvents=c.droppedEvents+1;if c.droppedEvents==1 then print("DuckMoo Omni Capture: event journal full. New events paused; snapshots continue. Existing history has been preserved.") end;return end
     c.sequence=c.sequence+1
-    c.events[#c.events+1]={id=c.sequence,journalID=c.journalID,kind=kind,at=GetServerTime(),data=O.Safe(payload)}
+    local life=O.Life and O.Life()
+    c.events[#c.events+1]={id=c.sequence,journalID=c.journalID,lifeID=life and life.id,context=O.EventContext and O.EventContext(c),kind=kind,at=GetServerTime(),data=O.Safe(payload)}
 end

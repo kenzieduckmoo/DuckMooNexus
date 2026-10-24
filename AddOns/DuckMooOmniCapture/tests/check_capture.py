@@ -29,7 +29,7 @@ C_Container={GetContainerNumSlots=function(bag) assert(bag>=0 and bag<=5);return
 C_Reputation={GetNumFactions=function() return 1 end,GetFactionDataByIndex=function() return {factionID=100} end,GetFactionDataByID=function() return {name='Fixture faction',reaction=5,currentStanding=1250,currentReactionThreshold=0,nextReactionThreshold=3000,isAccountWide=true} end}
 C_MajorFactions={GetMajorFactionData=function() return {renownLevel=12,renownReputationEarned=750,renownLevelThreshold=2500} end}
 ''')
-for name in ('Model.lua','Capture.lua','Core.lua'):
+for name in ('Model.lua','Capture.lua','Life.lua','Extended.lua','Core.lua'):
     lua.execute('assert(loadstring(...))("DuckMooOmniCapture",O)',(ROOT/name).read_text(encoding='utf-8'))
 lua.execute('''
 O.Init();O.Scan('test')

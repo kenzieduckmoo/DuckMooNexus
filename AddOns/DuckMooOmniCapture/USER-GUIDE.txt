@@ -28,11 +28,14 @@ SNAPSHOT SECTIONS
 Profile: GUID/identity, realm, class/race/faction, spec, level/XP/rested, average
 and equipped item levels, wallet money, zone/subzone/map, bind, guild, health,
 client build/interface/project/locale/region and observation time when available.
-Equipment: equipped slots 1-19, item IDs, links and textures exposed by the game.
+Equipment: equipped slots 1-19, item IDs, links, readable item level and textures
+exposed by the game. Newer Omni equipment can supply character-sheet slots when
+an API profile is absent or older; absent detailed stats remain unknown.
 Inventory: carried bags including the reagent bag where available, capacity,
 free slots, item IDs/links/names, stack quantity, rarity, binding and icon IDs.
-It does not currently scan bank, warbank, mail or guild storage. Other Nexus
-sources can supply those locations independently.
+Storage has a separate partial observation section: readable bank/warbank
+containers, loaded mailbox headers/attachments and viewed guild-bank tabs.
+Other Nexus sources can supply storage independently.
 Currencies: visible currency rows, previously known IDs and event-discovered IDs,
 their returned amount/cap and other exposed properties. Undiscovered or collapsed
 currency coverage can be incomplete; an absent row does not establish zero.
@@ -83,14 +86,15 @@ Stale Nexus: check /dmomni is enabled, save normally, then inspect external sync
 Missing knowledge/pool: open that profession and allow the API to load. Missing
 currency is unknown; a reported zero is valid. Full queue: inspect sync/receipt
 handling and reload after confirmation, rather than deleting the raw history.
-Actual Retail capture, logout preservation and acknowledged rotation have been
-observed. The 0.1.4 pool-discovery path has now been observed in actual client saves,
-with matching resource amounts and timestamps in Nexus Professions and Crafting Desk. Preview is Retail only; Forever
-compatibility and Hardcore-specific life coverage are not claimed here.
+Earlier Retail releases have observed capture, logout preservation and journal
+rotation. Version 0.1.4 pool discovery was observed in actual client saves, with
+matching resources in Nexus. New 0.2.0 life/collection/activity/storage paths
+have focused mocked checks; their actual client observations remain pending.
+Forever compatibility and actual Hardcore gameplay are not live-verified.
 
 INSTALLATION, UPDATING AND DATA SAFETY
-Version in this bundle: 0.1.4. Documentation prepared October 24, 2026.
-Client: WoW Retail preview; keep the TOC's existing Interface values. A declared
+Version in this bundle: 0.2.0. Documentation prepared October 24, 2026.
+Clients: Retail preview and prepared Forever/Camelot interface 16001; retain the supplied client-specific TOCs. A declared
 interface is not proof every path has been tested on that patch. This package
 does not claim Forever/Classic compatibility. Category: DuckMoo Media.
 
@@ -123,3 +127,63 @@ Include addon version, client build/locale, command/page, steps and exact error,
 plus whether the data was current or an offline snapshot. Inspect timestamps
 before treating missing data as zero. Share a minimal redacted sample only when
 needed; notes, names, character histories and credentials should stay private.
+
+FOREVER PREPARATION AND LIFE SUMMARIES (0.2.0)
+The package now includes DuckMooOmniCapture_Camelot.toc for the installed
+Forever interface 16001. This is prepared compatibility, not an observed
+Forever login. The same independent collector runs in each client with separate
+SavedVariables, receipts and Nexus namespaces. Retail data is not copied to
+Forever. The installed Forever sync waits for a new save after enrollment,
+so old/copied files do not masquerade as new game observations.
+
+Adventure Journal on Nexus (/adventures) separates Retail and Forever. A life
+summary records its stable ID, first observation time/level, highest observed
+level, death count, last death and explicitly configured mode. Journal events
+include life ID and cached location/level context with its original sample time.
+Recording does not establish a character creation time or complete play history.
+
+/dmomni hardcore on marks this character for Hardcore recording.
+/dmomni hardcore off marks standard play. The change is journaled.
+Forever starts with unconfirmed mode; Retail defaults to standard. No guessed
+realm-name or client-project rule declares Hardcore eligibility. An observed
+death closes a life only when explicitly configured as Hardcore at that time.
+Duplicate death signals before resurrection are suppressed. Standard deaths
+increment the count without closing the life. Disabling Hardcore afterwards
+does not delete an earlier terminal observation. A new character GUID begins
+a separate record; the addon never silently resets or erases a dead character.
+
+Death events retain readable profile/location context. Killer identity and
+combat cause remain unknown; this version does not run a combat-log recorder.
+Existing journal rotation and overflow protection still apply. First Forever
+login/reload, loading-screen behavior and actual Hardcore gameplay remain
+client verification gates. Updates preserve player SavedVariables and installed
+Acknowledgements.lua receipts. Runtime packages contain only an empty receipt.
+
+EXTENDED OBSERVATIONS (0.2.0)
+Collections: returned mount IDs and ownership, owned pet IDs/details where the
+API exists, visible filtered owned toys, and total achievement points. Account
+collections remain labeled as account data, not personal character ownership.
+Collection filters are never changed. Missing namespaces retain the earlier
+sample. Mount/pet/toy loops are bounded; limited data is marked. Each collection
+retains its own date. Appearance completion is not inferred. Full collection
+reads are throttled for five minutes unless a collection-change event occurs.
+
+Activities: active quest-log titles, IDs, returned frequency flags and readable
+objective counts/text. This is not a census of every unaccepted daily, weekly
+or hidden world task. Completed quest IDs and observed turn-ins remain separate.
+
+Storage reads wait for you to open the bank, mailbox or guild bank normally.
+No window is opened and no bank tab is selected automatically. Bank containers
+come from exposed client enums; unready containers retain their older sample.
+The legacy fallback covers the exposed main bank container; unenumerated bank
+bags remain outside that partial observation. Guild storage covers only viewed,
+readable tabs. Mail covers loaded headers and attachment metadata, with loaded
+and reported counts; it never reads message bodies or collects/sends anything.
+Locations/tabs retain independent dates. Older values may be stale until revisited.
+
+Nexus character sheets expose Collections in its own tab; Active quests and
+Storage observations appear inside Progress. These are separate source views; they are not silently added to
+Syndicator inventory, shared-stock planning or financial totals. Character sheets
+and the directory accept a separate Forever client selection. Retail API icons
+and crafting/history links are not reused for a Forever character. The Forever
+Adventure Journal links directly to that character's dedicated sheet.

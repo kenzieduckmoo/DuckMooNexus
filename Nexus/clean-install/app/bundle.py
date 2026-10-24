@@ -39,7 +39,7 @@ def unpack_bundle(path, destination, namespace='retail-main-account'):
         if packet.getinfo('manifest.json').file_size>16384 or packet.getinfo('source.lua.gz').file_size>MAX_PACKET:
             raise ValueError('Oversized member')
         manifest=json.loads(packet.read('manifest.json'))
-        if manifest['namespace']!=namespace or manifest['source'].removesuffix('.lua') not in SOURCES or not manifest['source'].endswith('.lua'):
+        if manifest['namespace'] not in ({'retail-main-account','forever-main-account'} if namespace is None else {namespace}) or manifest['source'].removesuffix('.lua') not in SOURCES or not manifest['source'].endswith('.lua'):
             raise ValueError('Invalid source or namespace')
         digest=manifest['sha256']
         if len(digest)!=64 or any(c not in '0123456789abcdef' for c in digest):

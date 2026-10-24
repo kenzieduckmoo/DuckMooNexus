@@ -7,6 +7,10 @@ $scriptDirectory = $PSScriptRoot
 if (-not $ConfigPath) { $ConfigPath = Join-Path $scriptDirectory 'config.json' }
 . (Join-Path $scriptDirectory 'Sync-Helpers.ps1')
 $state = Join-Path $scriptDirectory 'state'
+if ($ConfigPath -and (Test-Path -LiteralPath $ConfigPath)) {
+    $stateConfig = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
+    if ($stateConfig.StateDirectory) { $state = [string]$stateConfig.StateDirectory }
+}
 New-Item -ItemType Directory -Force -Path $state | Out-Null
 $lock = $null
 try {
@@ -15,11 +19,21 @@ try {
     $config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
     $arguments = @((Join-Path $scriptDirectory 'app\collect_sources.py'), $config.SavedVariables, $state)
     if ($config.TsmAppData) { $arguments += @('--tsm-appdata', $config.TsmAppData) }
+    $namespace = if ($config.Namespace) { [string]$config.Namespace } else { 'retail-main-account' }
+    if ($namespace -notin @('retail-main-account','forever-main-account')) { throw 'Unsupported client namespace' }
+    $arguments += @('--namespace', $namespace)
+    if ($config.MinimumSavedAt) { $arguments += @('--minimum-saved-at', [string]$config.MinimumSavedAt) }
     $collectorError = Join-Path $state 'collector-error.log'
     $packetsJson = & $config.Python @arguments 2> $collectorError
     if ($LASTEXITCODE -ne 0) { throw ("Source collection failed: " + (Get-Content -LiteralPath $collectorError -Raw)) }
     $packets = ConvertFrom-Json -InputObject ($packetsJson -join "`n")
-    if ($packets.Count -eq 0) { throw 'No source packets found; check SavedVariables path and allow recent saves 15 seconds to settle.' }
+    if ($packets.Count -eq 0) {
+        if ($config.AllowEmpty) {
+            @{success=$true; status='awaiting_first_save'; namespace=$namespace; at=[DateTime]::UtcNow.ToString('o'); packets=0} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $state 'last-result.json') -Encoding UTF8
+            exit 0
+        }
+        throw 'No source packets found; check SavedVariables path and allow recent saves 15 seconds to settle.'
+    }
     # One small receipt query avoids uploading the entire retained history each run.
     # The server checks its current generation, so reinstall/recovery still replays
     # any packets whose committed receipt is no longer valid. Local archives stay.
@@ -49,7 +63,7 @@ try {
     $omniAck = @{ status='not_attempted' }
     try {
         [IO.File]::WriteAllText((Join-Path $state 'omni-committed-packets.json'), (ConvertTo-Json -InputObject @($committed) -Compress), (New-Object Text.UTF8Encoding($false)))
-        $ackOutput = & $config.Python (Join-Path $scriptDirectory 'app\write_omni_ack.py') $config.SavedVariables $state 2> (Join-Path $state 'omni-ack-error.log')
+        $ackOutput = & $config.Python (Join-Path $scriptDirectory 'app\write_omni_ack.py') $config.SavedVariables $state --namespace $namespace 2> (Join-Path $state 'omni-ack-error.log')
         if ($LASTEXITCODE -ne 0) { throw 'Omni receipt update failed; local journal retained.' }
         $omniAck = ConvertFrom-Json -InputObject ($ackOutput -join "`n")
     } catch {

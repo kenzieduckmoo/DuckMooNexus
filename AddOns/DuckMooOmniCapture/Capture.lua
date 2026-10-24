@@ -20,7 +20,7 @@ function O.Profile()
         subzone=O.Call(GetSubZoneText),mapID=map,bind=O.Call(GetBindLocation),guild=O.Call(GetGuildInfo,"player"),
         xp=O.Call(UnitXP,"player"),xpMax=O.Call(UnitXPMax,"player"),rested=O.Call(GetXPExhaustion),
         health=O.Call(UnitHealthMax,"player"),build=build,interface=interface,projectID=WOW_PROJECT_ID,
-        locale=O.Call(GetLocale),region=O.Call(GetCurrentRegion),lastSeen=GetServerTime()}
+        client=O.Client(),locale=O.Call(GetLocale),region=O.Call(GetCurrentRegion),lastSeen=GetServerTime()}
 end
 function O.Currencies()
     if not api(C_CurrencyInfo,"GetCurrencyListSize") then return nil,"unavailable","Currency API unavailable" end
@@ -94,7 +94,7 @@ function O.Keystone()
 end
 function O.Equipment()
     local rows={}
-    for slot=1,19 do rows[slot]={itemID=O.Call(GetInventoryItemID,"player",slot),link=O.Call(GetInventoryItemLink,"player",slot),texture=O.Call(GetInventoryItemTexture,"player",slot)} end
+    for slot=1,19 do local link=O.Call(GetInventoryItemLink,"player",slot);rows[slot]={itemID=O.Call(GetInventoryItemID,"player",slot),link=link,itemLevel=link and read(C_Item,"GetDetailedItemLevelInfo",link),texture=O.Call(GetInventoryItemTexture,"player",slot)} end
     return rows,"captured"
 end
 function O.Inventory()
@@ -185,7 +185,7 @@ end
 function O.Scan(reason,only)
     if O.shuttingDown or O.loading or not O.Character() then return end
     if O.Call(InCombatLockdown) then O.pending=true;return end
-    local handlers={profile=O.Profile,currencies=O.Currencies,vault=O.Vault,lockouts=O.Lockouts,keystone=O.Keystone,equipment=O.Equipment,quests=O.Quests,knowledge=O.Knowledge,inventory=O.Inventory,reputations=O.Reputations}
+    local handlers={collections=O.Collections,activities=O.Activities,storage=O.Storage,life=O.Life,profile=O.Profile,currencies=O.Currencies,vault=O.Vault,lockouts=O.Lockouts,keystone=O.Keystone,equipment=O.Equipment,quests=O.Quests,knowledge=O.Knowledge,inventory=O.Inventory,reputations=O.Reputations}
     for key,fn in pairs(handlers) do
         if not only or only[key] then
             O.readLimited=false

@@ -1,3 +1,9 @@
+# DuckMoo Omni Capture 0.2.0
+
+Current behavior is documented in USER-GUIDE.txt. Includes life summaries and a prepared Forever/Camelot interface-16001 TOC. Actual Forever login and Hardcore verification remain pending game access.
+
+Earlier notes below are historical and superseded where the current guide differs.
+
 Current release documentation: see **USER-GUIDE.txt** for installation, commands, captured data, storage, Nexus integration and current verification limits. Earlier version notes below are historical.
 
 # DuckMoo Omni Capture 0.1.1 â€” Retail preview

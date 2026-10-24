@@ -8,7 +8,7 @@ destination=root/'dist';destination.mkdir(exist_ok=True)
 output=destination/f'DuckMooOmniCapture-{version}.zip'
 toc=root/'DuckMooOmniCapture.toc'
 runtime=[s.strip().replace('\\','/') for s in toc.read_text().splitlines() if s.strip() and not s.lstrip().startswith('#')]
-files={toc,root/'USER-GUIDE.txt',root/'README.md'}
+files={toc,root/'USER-GUIDE.txt',root/'README.md',*root.glob('*_Camelot.toc')}
 for name in runtime:
     path=(root/name).resolve()
     assert path.is_relative_to(root) and path.is_file(),name

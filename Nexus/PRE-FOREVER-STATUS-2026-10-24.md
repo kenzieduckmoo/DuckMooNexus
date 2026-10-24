@@ -16,7 +16,7 @@ Six separate addon ZIPs have comprehensive USER-GUIDE.txt files, roughly 1,000 w
 | DuckMooFolio | 0.5.3 | https://github.com/kenzieduckmoo/CharacterFolio |
 | DuckMooPlanner | 0.5.3 | https://github.com/kenzieduckmoo/ConcentrationPlanner |
 | DuckMooWarband | 0.4.0 | https://github.com/kenzieduckmoo/DuckMooWarband |
-| DuckMooOmniCapture | 0.1.4 | https://github.com/kenzieduckmoo/DuckMooOmniCapture |
+| DuckMooOmniCapture | 0.2.0 | https://github.com/kenzieduckmoo/DuckMooOmniCapture |
 | FiammaCollector / Fia's ATDART | 0.1.2 | https://github.com/kenzieduckmoo/FiasATDART |
 
 The three newly created repositories are private. Existing repository visibility is preserved. Existing remote source was reconciled before updates; Fia's newer repository version 0.1.2 was retained over the older installed 0.1.1 copy. Planner's repository-required pull-request workflow was followed and merged. The Nexus aggregate source is supplementary, not a replacement for individual repositories.
@@ -36,3 +36,7 @@ Prepared ZIPs are under `releases/curseforge-ready-2026-10-24/`. They are upload
 This is a usable pre-Forever checkpoint with explicit remaining checks, not an RTM declaration for every addon or a claim that the entire long-term Nexus vision is finished.
 
 Crafting Capture 0.9.0 now scans one quality per whole reagent slot rather than mixed-stack permutations. The cache revision prevents resuming older mixed jobs; actual timing remains a client measurement.
+
+## Later October 24 preparation
+
+Omni 0.2.0 and the native Adventure Journal are delivered, with independent Forever sync, character sheets and expanded storage/collection/activity/life observations. The earlier 0.1.4 actual-client results above do not establish live validation of the new 0.2.0 paths. See FOREVER-READY-2026-10-24.md.

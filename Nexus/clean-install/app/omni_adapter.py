@@ -3,8 +3,8 @@ import re
 from collections.abc import Mapping
 
 OMNI_SOURCE='DuckMooOmniCapture.lua'
-OMNI_VERSION='0.1.3-omni3'
-SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge','inventory','reputations'}
+OMNI_VERSION='0.2.0-omni4'
+SECTIONS={'profile','currencies','vault','lockouts','keystone','equipment','quests','knowledge','inventory','reputations','life','collections','activities','storage'}
 
 def omni_rows(data,recovered_profiles=None):
     db=data.get('DuckMooOmniCaptureDB')
@@ -51,7 +51,7 @@ def omni_rows(data,recovered_profiles=None):
             yield guid,'omni_section',key,section.get('observedAt'),'section_seen',dict(section)
         for event in entries:
             if not isinstance(event,Mapping) or type(event.get('id')) is not int or event['id']<=0 or type(event.get('at')) is not int:raise ValueError('Malformed Omni event')
-            if event.get('kind') not in ('session_start','session_end','level','quest_completed','loot','death','achievement','encounter'):raise ValueError('Unsupported Omni event')
+            if event.get('kind') not in ('session_start','session_end','level','quest_completed','loot','death','achievement','encounter','life_mode'):raise ValueError('Unsupported Omni event')
             yield guid,'omni_event',str(event['id']),event['at'],'event_seen',dict(event)
 
 def normalize_omni(conn,data,namespace,snapshot_id):

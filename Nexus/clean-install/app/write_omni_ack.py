@@ -34,7 +34,7 @@ def acknowledgement_rows(db):
     return result
 
 
-def publish(savedvariables,state):
+def publish(savedvariables,state,namespace='retail-main-account'):
     savedvariables,state=Path(savedvariables).resolve(),Path(state).resolve()
     source=savedvariables/'DuckMooOmniCapture.lua'
     checkpoints=json.loads((state/'source-checkpoints.json').read_text(encoding='utf-8-sig'))
@@ -45,7 +45,7 @@ def publish(savedvariables,state):
     if not re.fullmatch('[a-f0-9]{64}',digest):raise ValueError('Invalid committed packet identifier')
     with zipfile.ZipFile(state/'packets'/(digest+'.bundle')) as packet:
         manifest=json.loads(packet.read('manifest.json'))
-        if manifest.get('source')!='DuckMooOmniCapture.lua' or manifest.get('original_name')!='DuckMooOmniCapture.lua' or manifest.get('namespace')!='retail-main-account':raise ValueError('Receipt does not cover the primary Omni source')
+        if manifest.get('source')!='DuckMooOmniCapture.lua' or manifest.get('original_name')!='DuckMooOmniCapture.lua' or manifest.get('namespace')!=namespace:raise ValueError('Receipt does not cover the primary Omni source')
         if not 0<manifest.get('raw_bytes',0)<=256*1024**2:raise ValueError('Omni acknowledgement source exceeds bound')
         with tempfile.TemporaryDirectory(dir=state) as folder:
             path=Path(folder)/'confirmed.lua'
@@ -78,5 +78,5 @@ def publish(savedvariables,state):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('savedvariables');parser.add_argument('state');args=parser.parse_args()
-    print(json.dumps(publish(args.savedvariables,args.state)))
+    parser=argparse.ArgumentParser();parser.add_argument('savedvariables');parser.add_argument('state');parser.add_argument('--namespace',choices=['retail-main-account','forever-main-account'],default='retail-main-account');args=parser.parse_args()
+    print(json.dumps(publish(args.savedvariables,args.state,args.namespace)))

@@ -1,0 +1,14 @@
+## Interface: 16001
+## AllowLoadGameType: camelot
+## Title: DuckMoo Omni Capture (Forever preview)
+## Notes: Independent, timestamped character observations for DuckMoo Nexus.
+## Author: DuckMoo Media
+## Version: 0.2.0
+## Category: DuckMoo Media
+## SavedVariables: DuckMooOmniCaptureDB
+Acknowledgements.lua
+Model.lua
+Capture.lua
+Life.lua
+Extended.lua
+Core.lua
