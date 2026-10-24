@@ -25,7 +25,8 @@ function buildEvaluationIndex(snapshot){
 function evaluateSetup(snapshot,setup,now,index){
   const recipe=index?index.recipes.get(JSON.stringify([setup.recipeKey,setup.scope])):(snapshot.recipes||[]).find(r=>r.key===setup.recipeKey&&r.scope===setup.scope);
   if(!recipe)return {error:'Recipe is missing from the latest import.'};
-  if(recipe.capture&&setup.capturedAt!==recipe.capture.observedAt)return {error:'This operation was recaptured. Open its recipe and save a fresh setup.'};
+  if(recipe.capture&&setup.capturedAt!==recipe.capture.observedAt&&
+    (setup.output!==recipe.output||setup.quantity!==recipe.quantity||setup.concentration!==recipe.capture.concentration||setup.professionId!==recipe.capture.skillLineID||JSON.stringify(Object.entries(recipe.materials).sort())!==setup.materialSignature))return {error:'This operation changed when recaptured. Open its recipe and save a fresh setup.'};
   if(JSON.stringify(Object.entries(recipe.materials).sort())!==setup.materialSignature)return {error:'Recipe requirements changed. Create a fresh setup.'};
   const crafter=recipe.crafters.find(c=>c.name===setup.crafterName&&c.realm===setup.realm);
   if(!crafter)return {error:'Crafter is missing from this recipe record.'};

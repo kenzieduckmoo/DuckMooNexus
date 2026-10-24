@@ -80,7 +80,8 @@ def build(conn):
         if row['owner_kind']=='guild' or row['location'] not in ('bags','bank','bankTabs'):continue
         location='warband' if row['owner_kind']=='warband' else 'bank' if row['location']=='bankTabs' else row['location']
         inventory['items'].setdefault(item,[]).append({'owner':'Warband' if location=='warband' else row['owner_key'],
-            'location':location,'quantity':row['quantity'],'bound':row['is_bound'] is not False})
+            'location':location,'quantity':row['quantity'],'bound':row['is_bound'] is not False,
+            'observedAt':row['item_observed_at'].timestamp() if row['item_observed_at'] else None})
     inventory['characters']=len(owners)
     for row in conn.execute('SELECT item_id,name FROM nexus.item_catalog WHERE namespace=%s',(ACCOUNT,)):
         inventory['names'].setdefault('i:'+str(row['item_id']),row['name'])
@@ -127,7 +128,7 @@ def _refresh(folder):
             'DuckMooOmniCapture.lua','Syndicator.lua','TSM_AppData.lua','Auctionator.lua')
           AND (source='TradeSkillMaster.lua' OR normalized_version IS NOT NULL)
           ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC)
-          SELECT json_build_array('crafting-0.9.3',
+          SELECT json_build_array('crafting-0.9.4',
             (SELECT json_agg(json_build_array(source,id,normalized_version) ORDER BY source) FROM latest),
             (SELECT max(id) FROM nexus.api_snapshots WHERE region='us')) AS signature''',(ACCOUNT,)).fetchone()['signature']
         checkpoint=folder/'source-signature.json'

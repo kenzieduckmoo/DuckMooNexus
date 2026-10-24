@@ -13,7 +13,7 @@ function availability(snapshot,entry,existing=[],now=Date.now()/1000){
  const cd=r.cooldown;
  if(!r.cooldownCaptured||!cd||!Number.isFinite(cd.observedAt)||cd.observedAt>now+300||now-cd.observedAt>86400*3||!Number.isFinite(cd.seconds)||cd.seconds<0)
   return {limit:0,wait:null,reason:'Open the profession to refresh recipe availability.'};
- const queued=existing.filter(s=>batchDaily.poolKey(s)===batchDaily.poolKey(entry.setup)&&recipeIdentity(s)===id).reduce((n,s)=>n+s.count,0);
+ const queued=[...existing,...(snapshot.pendingCompleted||[]).filter(s=>s.completedAt>=cd.observedAt)].filter(s=>batchDaily.poolKey(s)===batchDaily.poolKey(entry.setup)&&recipeIdentity(s)===id).reduce((n,s)=>n+s.count,0);
  const wait=Math.max(0,cd.observedAt+cd.seconds-now);
  let limit=10000;
  if(cd.maxCharges>0)limit=Math.min(cd.maxCharges,Math.max(0,Math.floor(cd.charges||0))+(cd.seconds>0&&wait===0?1:0));
@@ -27,7 +27,11 @@ function evaluateBatch(snapshot,entry,count,existing=[],now=Date.now()/1000){
  const state=availability(snapshot,entry,existing,now),issues=[];
  if(state.limit<count)issues.push(state.reason||'The requested batch exceeds known recipe charges.');
  const plan=batchDaily.evaluateDailyPlan(snapshot,[...existing,{...entry.setup,count}],now),line=plan.lines.at(-1);
- issues.push(...plan.issues);
+ // Other saved lines keep their own warnings and resource reservations. They
+ // must not veto an otherwise valid craft on an unrelated character.
+ if(line?.result.error)issues.push(line.result.error);
+ if(line?.result.plan?.unresolved?.length)issues.push('The requested craft has incomplete reagent choices.');
+ if(entry.setup.concentration>0){const pool=plan.pools.find(p=>p.key===batchDaily.poolKey(entry.setup));if(pool?.available==null)issues.push('Concentration availability unknown');else if(pool.required>pool.available)issues.push(pool.name+': needs '+Math.ceil(pool.required-pool.available)+' more concentration');}
  if(line?.result.finance?.profit==null)issues.push('A sale or material price is missing.');
  return {entry,count,plan,rows:line?.reservedRows||[],profit:line?.result.finance?.profit??null,
   materialCost:line?.result.plan?.materialCost??null,buy:(line?.reservedRows||[]).some(r=>r.missing>0&&!r.price)?null:

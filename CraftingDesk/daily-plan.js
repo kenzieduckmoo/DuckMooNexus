@@ -1,5 +1,6 @@
 /* Shared-stock accounting and bounded concentration planning. All money is copper. */
-const dailyMath=typeof module!=='undefined'?require('./profit-ui.js'):{evaluateSetup,setupFromCapture,concentrationGain,buildEvaluationIndex,assignConcentrationGains};
+const dailyMath=typeof module!=='undefined'?require('./profit-ui.js'):{evaluateSetup,setupFromCapture,concentrationGain,buildEvaluationIndex,assignConcentrationGains,concentrationBudget};
+const dailyMaterials=typeof module!=='undefined'?require('./material-ui.js'):{materialPlan};
 function qualityLabel(item,names={},tiers={}){return (names[item]||item)+(tiers[item]?' · Quality '+tiers[item]:'');}
 function completePlanCrafts(setups,completed,id,count,at=Date.now()/1000){
   const setup=setups.find(s=>s.id===id);
@@ -12,6 +13,38 @@ function completionNeedsImport(snapshot,completed){
   if(!completed.length)return false;
   const last=Math.max(...completed.map(s=>s.completedAt));
   return ['Syndicator','DuckMooPlanner'].some(name=>!(snapshot.sources||[]).some(s=>s.name===name&&s.savedAt>last));
+}
+// Completion checkmarks are provisional debits, until the corresponding game
+// observation catches up. A different character never needs to wait for them.
+function completionSnapshot(snapshot,completed=[],now=Date.now()/1000){
+  if(!completed.length)return snapshot;
+  const characters=(snapshot.characters||[]).map(c=>({...c,professions:(c.professions||[]).map(p=>({...p}))}));
+  const items=Object.fromEntries(Object.entries(snapshot.inventory?.items||{}).map(([k,v])=>[k,v.map(p=>({...p}))]));
+  const inventoryAt=(snapshot.sources||[]).find(s=>s.name==='Syndicator')?.savedAt||0;
+  const pending=[];
+  for(const done of [...completed].sort((a,b)=>a.completedAt-b.completedAt)){
+    const character=characters.find(c=>ownerKey({crafterName:c.name,realm:c.realm})===ownerKey(done));
+    const profession=character?.professions.find(p=>p.id===done.professionId),pool=profession?.concentration;
+    const sourcePool=(snapshot.characters||[]).find(c=>c.guid===character?.guid)?.professions.find(p=>p.id===done.professionId)?.concentration;
+    const resourcePending=done.concentration>0&&!(sourcePool?.observedAt>done.completedAt);
+    if(resourcePending&&pool){
+      const budget=dailyMath.concentrationBudget(pool,1,1,now);
+      if(budget)profession.concentration={...pool,amount:Math.max(0,budget.available-done.concentration*done.count),observedAt:now};
+    }
+    let materialPending=false;
+    try{
+      for(const [key,quantity] of JSON.parse(done.materialSignature)){
+        const item=done.selections[key];if(!item)continue;
+        let remaining=quantity*done.count;
+        const places=(items[item]||[]).filter(p=>(p.location==='warband'||p.bound===false||p.owner.replaceAll(' ','').toLowerCase()===ownerKey(done))&&!(Number(p.observedAt||inventoryAt)>done.completedAt));
+        if(places.length||!(inventoryAt>done.completedAt))materialPending=true;
+        places.sort((a,b)=>Number(b.owner.replaceAll(' ','').toLowerCase()===ownerKey(done))-Number(a.owner.replaceAll(' ','').toLowerCase()===ownerKey(done)));
+        for(const place of places){const used=Math.min(remaining,place.quantity);place.quantity-=used;remaining-=used;if(!remaining)break;}
+      }
+    }catch{materialPending=true;}
+    if(resourcePending||materialPending)pending.push({...done,resourcePending,materialPending});
+  }
+  return {...snapshot,characters,inventory:{...snapshot.inventory,items},pendingCompleted:pending};
 }
 function ownerKey(setup){return (setup.crafterName+'-'+setup.realm).replaceAll(' ','').toLowerCase();}
 function poolKey(setup){return ownerKey(setup)+'|'+(setup.professionId??'unknown');}
@@ -61,7 +94,14 @@ function evaluateDailyPlan(snapshot,setups,now=Date.now()/1000){
   for(const setup of setups){
     if(!Number.isInteger(setup.count)||setup.count<1||setup.count>10000){issues.push(setup.name+': invalid craft count');profitKnown=requirementsKnown=false;continue;}
     const result=dailyMath.evaluateSetup(snapshot,setup,now,evaluationIndex),line={setup,result};lines.push(line);
-    if(result.error){issues.push(setup.name+': '+result.error);profitKnown=requirementsKnown=false;continue;}
+    if(result.error){
+      issues.push(setup.name+': '+result.error);profitKnown=requirementsKnown=false;
+      // Preserve reservations from a stale saved line without pretending its
+      // old output or profit is a currently verified recipe observation.
+      try{const recipe={materials:Object.fromEntries(JSON.parse(setup.materialSignature))};result.plan=dailyMaterials.materialPlan(recipe,setup.selections,setup.count,{name:setup.crafterName,realm:setup.realm},snapshot.inventory||{},snapshot.market||{});result.finance={profit:null};
+        const c=snapshot.characters.find(c=>ownerKey({crafterName:c.name,realm:c.realm})===ownerKey(setup));result.budget=dailyMath.concentrationBudget(c?.professions.find(p=>p.id===setup.professionId)?.concentration,setup.concentration,setup.count,now);
+      }catch{continue;}
+    }
     if(result.finance.profit==null)profitKnown=false;else profit+=result.finance.profit;
     if(result.plan.unresolved.length){requirementsKnown=false;issues.push(setup.name+': incomplete reagent choices');}
     for(const row of result.plan.rows)demands.push({...row,lineIndex:lines.length-1,owner:ownerKey(setup),crafter:setup.crafterName,realm:setup.realm,remaining:row.needed,used:0});
@@ -176,4 +216,4 @@ function dailyPlanText(plan,names={},tiers={}){
     ...plan.shopping.filter(r=>r.missing>0).map(r=>`${r.missing} x ${qualityLabel(r.item,names,tiers)} (${r.scope})${r.price==null?' — price unknown':''}`),
     '', 'Stock allocation:',...plan.allocations.map(a=>`${a.quantity} x ${qualityLabel(a.item,names,tiers)}: ${a.owner} / ${a.location} → ${a.crafter} (${a.realm})`), '',auctionatorImportText(plan,names,tiers)].join('\n');
 }
-if(typeof module!=='undefined')module.exports={qualityLabel,completePlanCrafts,completionNeedsImport,auctionatorImportText,groupDaily,ownerKey,poolKey,planKey,dailyCandidates,filterDaily,evaluateDailyPlan,suggestConcentration,dailyPlanText};
+if(typeof module!=='undefined')module.exports={qualityLabel,completePlanCrafts,completionNeedsImport,completionSnapshot,auctionatorImportText,groupDaily,ownerKey,poolKey,planKey,dailyCandidates,filterDaily,evaluateDailyPlan,suggestConcentration,dailyPlanText};
