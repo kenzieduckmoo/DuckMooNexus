@@ -1,6 +1,11 @@
 local _,O=...
 local function api(root,key) return root and root[key] end
 local function read(root,key,...) return O.Call(api(root,key),...) end
+local function concentration(currencyID,currency)
+    if type(currencyID)~="number" or currencyID<=0 or not currency or type(currency.quantity)~="number" or type(currency.maxQuantity)~="number" or currency.quantity<0 or currency.maxQuantity<=0 or currency.quantity>currency.maxQuantity then return nil end
+    local cycle,amount=currency.rechargingCycleDurationMS,currency.rechargingAmountPerCycle
+    return {currencyID=currencyID,amount=currency.quantity,max=currency.maxQuantity,observedAt=GetServerTime(),secondsPerPoint=type(cycle)=="number" and cycle>0 and type(amount)=="number" and amount>0 and cycle/1000/amount or nil}
+end
 function O.Profile()
     local class,classFile,classID=O.Call(UnitClass,"player")
     local race,raceFile,raceID=O.Call(UnitRace,"player")
@@ -22,6 +27,10 @@ function O.Currencies()
     local rows,ids={},{}
     local c=O.Character()
     for id in pairs(c.sections.currencies and c.sections.currencies.data or {}) do ids[id]=true end
+    for _,record in pairs(c.sections.knowledge and c.sections.knowledge.data or {}) do
+        local pool=record.data and record.data.concentration
+        if pool and pool.currencyID then ids[pool.currencyID]=true end
+    end
     for id in pairs(O.currencyIDs or {}) do ids[id]=true end
     local size=read(C_CurrencyInfo,"GetCurrencyListSize")
     if not size then return nil,"unavailable","Currency list not ready" end
@@ -34,6 +43,12 @@ function O.Currencies()
         if info and info.name then rows[id]=info end
     end
     if not next(rows) then return nil,"unavailable","No readable currencies returned; prior observation retained" end
+    -- Refresh known pools from these same reads without rescanning trait trees.
+    -- The resource keeps its own time; the knowledge observation stays dated.
+    for _,record in pairs(c.sections.knowledge and c.sections.knowledge.data or {}) do
+        local pool=record.data and record.data.concentration
+        if pool and rows[pool.currencyID] then record.data.concentration=concentration(pool.currencyID,rows[pool.currencyID]) or pool end
+    end
     return rows,"partial","Visible list, previously observed IDs and currency events; collapsed/undiscovered currencies may be absent"
 end
 function O.Vault()
@@ -154,6 +169,16 @@ function O.Knowledge()
         result.tabs[id]=tab
     end
     local c=O.Character();local all=c.sections.knowledge and c.sections.knowledge.data or {}
+    local currencyID=read(C_TradeSkillUI,"GetConcentrationCurrencyID",info)
+    local currency=currencyID and read(C_CurrencyInfo,"GetCurrencyInfo",currencyID)
+    local pool=concentration(currencyID,currency)
+    if pool then
+        result.concentration=pool
+        O.currencyIDs=O.currencyIDs or {};O.currencyIDs[currencyID]=true
+    else
+        -- A temporary resource failure retains its own earlier timestamp.
+        result.concentration=all[info] and all[info].data and all[info].data.concentration
+    end
     all[info]={observedAt=GetServerTime(),data=result}
     return all,"partial","Only profession specializations opened by this character; no automatic UI opening"
 end

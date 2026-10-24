@@ -26,11 +26,17 @@ def build(conn):
     latest=conn.execute('''SELECT DISTINCT ON(source) id,source,source_saved_at,captured_at
       FROM nexus.source_snapshots WHERE namespace=%s ORDER BY source,source_saved_at DESC NULLS LAST,captured_at DESC,id DESC''',(ACCOUNT,)).fetchall()
     for row in latest:
-        if row['source'] in ('DuckMooCapture.lua','DuckMooFolio.lua','DuckMooPlanner.lua','Syndicator.lua','TSM_AppData.lua','Auctionator.lua'):
+        if row['source'] in ('DuckMooCapture.lua','DuckMooFolio.lua','DuckMooPlanner.lua','DuckMooOmniCapture.lua','Syndicator.lua','TSM_AppData.lua','Auctionator.lua'):
             sources.append({'name':row['source'].removesuffix('.lua'),'snapshotId':row['id'],
                 'savedAt':row['source_saved_at'].timestamp() if row['source_saved_at'] else None})
     for row in conn.execute("SELECT source,character_guid,payload FROM nexus.current_character_records WHERE namespace=%s AND record_kind='profile'",(ACCOUNT,)):
         key=row['source'].removesuffix('.lua');data[key][key+'DB']['characters'][row['character_guid']]=lua_keys(row['payload'])
+    omni={'schema':1,'characters':{}}
+    for row in conn.execute("SELECT character_guid,record_kind,record_key,payload FROM nexus.current_omni_records WHERE namespace=%s AND (record_kind='omni_identity' OR record_kind='omni_section' AND record_key IN('profile','knowledge','currencies'))",(ACCOUNT,)):
+        c=omni['characters'].setdefault(row['character_guid'],{'guid':row['character_guid'],'sections':{}})
+        if row['record_kind']=='omni_identity':c.update(lua_keys(row['payload']))
+        else:c['sections'][row['record_key']]=lua_keys(row['payload'])
+    data['DuckMooOmniCapture']={'DuckMooOmniCaptureDB':omni}
     # TSM craft ownership/name metadata is still a raw-only source; read its
     # preserved DB archive, never a Windows path or the user's old JSON snapshot.
     tsm=next((r for r in latest if r['source']=='TradeSkillMaster.lua'),None)
@@ -108,7 +114,7 @@ def _refresh(folder):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
     with psycopg.connect(os.environ['DATABASE_URL'],row_factory=dict_row) as conn:
         conn.execute('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY')
-        signature=conn.execute("SELECT json_build_array('crafting-0.9.1',(SELECT max(id) FROM nexus.source_snapshots),(SELECT max(id) FROM nexus.api_snapshots)) AS signature").fetchone()['signature']
+        signature=conn.execute("SELECT json_build_array('crafting-0.9.2',(SELECT max(id) FROM nexus.source_snapshots),(SELECT max(id) FROM nexus.api_snapshots)) AS signature").fetchone()['signature']
         checkpoint=folder/'source-signature.json'
         if checkpoint.exists() and json.loads(checkpoint.read_text())==signature and (folder/'local-data.json.gz').exists():return False
         model=build(conn)

@@ -67,3 +67,7 @@ recovery replay. Real scheduled pass succeeded with 1 new upload / 1,164 already
 committed. The pipeline is game save -> scheduled upload -> PostgreSQL import ->
 Crafting Desk model refresh -> page reload. No desktop Crafting Desk process is
 required.
+
+## Profession resource freshness follow-up — October 23, 2026
+
+R4/R5 now accept newer valid Omni concentration and opened-profession skill observations in the hosted model, matched by character GUID, child skill-line ID and concentration currency ID. Missing/older/invalid resources do not erase a valid earlier pool. New resources do not establish learned recipes or captured outcomes, and saved plans/setups are unchanged. Model refresh signature advanced to crafting-0.9.2. The first Omni journal rotation was observed in the actual client; the separate crafting scanner's live lifecycle gate remains outstanding. Profession-guide optimization remains paused.

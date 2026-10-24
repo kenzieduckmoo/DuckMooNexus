@@ -1,5 +1,5 @@
 local _, O = ...
-O.version = "0.1.3"
+O.version = "0.1.4"
 function O.PrepareJournal(guid,c)
     c.events=c.events or {};c.sequence=c.sequence or 0
     -- A new SavedVariables history must never inherit an older history's receipt.

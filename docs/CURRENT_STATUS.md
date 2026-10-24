@@ -7,7 +7,7 @@
 - Character pages: equipment/artwork, inventory, professions, history, visual vault/weekly progress, completed quest chronicle with API/Omni source choice, title search and recorded turn-ins, searchable encounters, currencies, PvP and source evidence.
 - Financials: actual warbank observations and growth, recorded cash movement, raw patron-order gold with profession filters and graphs, financial activity and auction-deposit movement.
 - Nexus-hosted Crafting Desk and internal calculation worker, with automatic source refresh and preserved saved choices.
-- Independent `DuckMooOmniCapture` 0.1.3 Retail preview installed; source adapter, automatic sync allowlist and website integration deployed. It captures named currencies, vault, lockouts, owned keys, equipment, basic character details, completed quest IDs, naturally opened knowledge and lightweight adventure events. It does not depend on the crafting scanner or third-party collectors.
+- Independent `DuckMooOmniCapture` 0.1.4 Retail preview installed; source adapter, automatic sync allowlist and website integration deployed. It captures named currencies, vault, lockouts, owned keys, equipment, basic character details, completed quest IDs, naturally opened knowledge and lightweight adventure events. It does not depend on the crafting scanner or third-party collectors.
 
 ## Important remaining work
 
@@ -22,3 +22,5 @@ Latest detail: `Nexus/OMNI-CAPTURE-2026-10-23.md`, `Nexus/CHARACTER-PROGRESS-202
 Deferred feature requests: see [Nexus backlog](../Nexus/BACKLOG.md), including reagent buying-day and quantity recommendations.
 
 Latest profession delivery: `Nexus/PROFESSION-BOARD-2026-10-23.md`. The reagent buying-day/quantity advisor remains deferred in the backlog.
+
+Profession concentration freshness now feeds the shared Crafting Desk model from valid newer Omni observations, with matched currency IDs and original resource timestamps. The new 0.1.4 discovery path awaits an actual client save; existing current Omni resources were verified through the live board and crafting API. See `Nexus/PROFESSION-RESOURCE-FRESHNESS-2026-10-23.md`.

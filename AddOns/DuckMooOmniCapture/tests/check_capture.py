@@ -58,6 +58,19 @@ local seq=c.sequence;O.db.settings.events=false;O.Event('death',{});assert(c.seq
 O.db.settings.events=true;O.Event('quest_completed',{questID=123,name='Fixture quest'})
 O.db.settings.enabled=false;O.Scan('paused');assert(c.lastSeen==NOW)
 O.db.settings.enabled=true
+local oldCurrency=C_CurrencyInfo.GetCurrencyInfo;POOL_AMOUNT=123
+C_CurrencyInfo.GetCurrencyInfo=function(id) if id==3161 then return {name='Fixture concentration',quantity=POOL_AMOUNT,maxQuantity=1000,rechargingCycleDurationMS=345600,rechargingAmountPerCycle=1} end;return oldCurrency(id) end
+C_TradeSkillUI={GetProfessionChildSkillLineID=function() return 2906 end,GetConcentrationCurrencyID=function() return 3161 end,GetProfessionInfoBySkillLineID=function() return {professionID=2906,professionName='Midnight Alchemy',parentProfessionName='Alchemy'} end}
+C_ProfSpecs={GetConfigIDForSkillLine=function() return 1 end,GetSpecTabIDsForSkillLine=function() return {} end}
+O.Scan('profession',{knowledge=true})
+local knowledgeAt=c.sections.knowledge.observedAt
+assert(c.sections.knowledge.data[2906].data.concentration.amount==123)
+assert(c.sections.knowledge.data[2906].data.concentration.secondsPerPoint==345.6)
+NOW=NOW+10;POOL_AMOUNT=0;C_TradeSkillUI.GetProfessionChildSkillLineID=function() return 0 end
+O.Scan('closed-profession-currency',{currencies=true})
+assert(c.sections.knowledge.data[2906].data.concentration.amount==0)
+assert(c.sections.knowledge.data[2906].data.concentration.observedAt==NOW)
+assert(c.sections.knowledge.observedAt==knowledgeAt)
 local scanned={};local original=O.Scan;O.Scan=function(_,keys) scanned=keys or {full=true} end
 FRAME.event(FRAME,'PLAYER_MONEY');FRAME.event(FRAME,'CURRENCY_DISPLAY_UPDATE',3310)
 assert(#timers==1);timers[1]();assert(scanned.profile and scanned.currencies and not scanned.quests)

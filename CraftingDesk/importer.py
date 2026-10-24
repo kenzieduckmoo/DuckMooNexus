@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime, timezone
 from materials import market_data, inventory_data, item_names, item_tiers, APP_DATA
 from captures import captured_recipes, capture_catalog, with_scanned_operations, scan_coverage, acquisition_offers
+from profession_resources import merge_omni_resources
 
 ROOT = Path(r'D:\World of Warcraft\_retail_\WTF\Account\SQUIRRELUDECKER\SavedVariables')
 
@@ -44,9 +45,9 @@ def read_lua(path, binary_strings=False):
 
 def collect():
     data, sources, errors = {}, [], []
-    for name in ('DuckMooFolio', 'DuckMooPlanner', 'TradeSkillMaster', 'Syndicator', 'DuckMooCapture'):
+    for name in ('DuckMooFolio', 'DuckMooPlanner', 'TradeSkillMaster', 'Syndicator', 'DuckMooCapture','DuckMooOmniCapture'):
         path = ROOT / (name + '.lua')
-        if name=='DuckMooCapture' and not path.exists(): continue
+        if name in ('DuckMooCapture','DuckMooOmniCapture') and not path.exists(): continue
         try:
             before = path.stat()
             data[name] = read_lua(path)
@@ -78,6 +79,7 @@ def assemble(data,sources,errors,market_override=None,inventory_override=None):
             if previous is None or (profession.get('seenAt') or 0)>(previous.get('seenAt') or 0):professions[profession['id']]=profession
         c['professions']=list(professions.values())
         characters.append(c)
+    merge_omni_resources(characters,data.get('DuckMooOmniCapture',{}).get('DuckMooOmniCaptureDB',{}))
     recipes = []
     tsm = data.get('TradeSkillMaster',{}).get('TradeSkillMasterDB',{})
     for scope, records in tsm.items():

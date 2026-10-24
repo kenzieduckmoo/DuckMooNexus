@@ -38,6 +38,13 @@ export function buildProfessionBoard(roster:D[],records:D[],omniRecords:D[],know
    }
    if(p.patron)r.patronCheck={...p.patron,source:'DuckMoo Planner'};
   }
+  for(const record of values(own.knowledge?.data)){
+   const meta=record?.data,p=meta?.concentration;if(!p||!meta.skillLineID)continue;
+   const name=gameText(meta.profession?.professionName??meta.profession?.name)||'Profession '+meta.skillLineID,r=ensure(String(meta.skillLineID),name,professionKey(name));
+   if(!r.concentration||Number(p.observedAt)>Number(r.concentration.observedAt??0))r.concentration={...p,source:'DuckMoo Omni Capture'};
+   const currency=own.currencies?.data?.[p.currencyID],at=own.currencies?.observedAt;
+   if(currency&&finite(currency.quantity)&&finite(currency.maxQuantity)&&finite(at)&&at>Number(r.concentration.observedAt??0))r.concentration={amount:currency.quantity,max:currency.maxQuantity,observedAt:at,secondsPerPoint:finite(currency.rechargingCycleDurationMS)&&currency.rechargingCycleDurationMS>0&&finite(currency.rechargingAmountPerCycle)&&currency.rechargingAmountPerCycle>0?currency.rechargingCycleDurationMS/1000/currency.rechargingAmountPerCycle:null,currencyID:p.currencyID,source:'DuckMoo Omni Capture',status:own.currencies.status};
+  }
   const knowledge=knowledgeRows({guid:c.character_guid,omni:own,extras:[{source:'WarbandNexus.lua',payload:{records:{['WarbandNexusDB / global / characters / '+c.character_guid]:{knowledgeData:wnByChar.get(c.character_guid)}}}}]});
   for(const k of knowledge){const name=gameText(k.expansionName??k.professionName),base=professionKey(k.professionName),r=ensure(String(k.skillLineID),name,professionKey(name)||base);r.knowledge={spent:finite(k.spentPoints)?k.spentPoints:null,unspent:finite(k.unspentPoints)?k.unspentPoints:null,at:iso(k.lastUpdate),source:k.source??'WarbandNexus'};}
   for(const r of entries.values()){
