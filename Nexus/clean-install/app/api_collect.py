@@ -99,6 +99,19 @@ def collect(region, realm, archive, bearer, previous=None, opener=urlopen):
     return metadata
 
 
+def unique_auctions(auctions):
+    """Collapse exact repeated listings; never guess between conflicting prices."""
+    if not isinstance(auctions, list):
+        raise ValueError('Invalid auction array')
+    unique = {}
+    for auction in auctions:
+        auction_id = auction['id']
+        if auction_id in unique and unique[auction_id] != auction:
+            raise ValueError('Conflicting duplicate auction ID')
+        unique[auction_id] = auction
+    return list(unique.values())
+
+
 def ingest_api(conn, archive, meta):
     with conn.transaction():
         conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',(meta['region']+':'+meta['scope'],))
@@ -108,9 +121,7 @@ def ingest_api(conn, archive, meta):
             if hashlib.sha256(raw).hexdigest()!=meta['sha256']:
                 raise ValueError('API archive checksum mismatch')
             body = json.loads(raw)
-            auctions = body['auctions']
-            if not isinstance(auctions,list):
-                raise ValueError('Invalid auction array')
+            auctions = unique_auctions(body['auctions'])
             snapshot = conn.execute('SELECT id FROM nexus.api_snapshots WHERE region=%s AND scope=%s AND sha256=%s AND source_modified_at IS NOT DISTINCT FROM %s::timestamptz',
                                     (meta['region'],meta['scope'],meta['sha256'],meta['source_modified_at'])).fetchone()
             if snapshot:

@@ -26,6 +26,22 @@ def retry_seconds(value, at):
             return 900
 
 
+def replay_pending(conn, archive):
+    """A broken saved response must not block fresh imports for every market."""
+    for pending in sorted(archive.glob('pending-*.json')):
+        try:
+            meta = json.loads(pending.read_text())
+            ingest_api(conn, archive, meta)
+            pending.rename(pending.with_name(pending.name.replace('pending-', 'imported-', 1)))
+        except Exception as exc:
+            # Keep raw responses. Invalid data is retained for inspection, while
+            # transient database failures remain queued for the next retry.
+            if isinstance(exc, (ValueError, KeyError, TypeError)):
+                pending.rename(pending.with_name(pending.name.replace('pending-', 'rejected-', 1)))
+            print(json.dumps({'pending_import': pending.name,
+                              'status': 'error_'+type(exc).__name__}), flush=True)
+
+
 def run(region, realms, archive):
     scopes = [('commodities', None)] + [(f'connected-realm:{r}', r) for r in sorted(set(realms))]
     with psycopg.connect(os.environ['DATABASE_URL'], autocommit=True) as conn:
@@ -34,10 +50,7 @@ def run(region, realms, archive):
             print('Another API worker is active.'); return
         # Retry metadata files whose raw responses were saved before a DB failure.
         archive.mkdir(parents=True, exist_ok=True)
-        for pending in sorted(archive.glob('pending-*.json')):
-            meta = json.loads(pending.read_text())
-            ingest_api(conn, archive, meta)
-            pending.rename(pending.with_name(pending.name.replace('pending-', 'imported-', 1)))
+        replay_pending(conn, archive)
         bearer = None
         for scope, realm in scopes:
             at = datetime.now(timezone.utc)
