@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import './characters.css';
+import './roster.css';
 import './crafting.css';
 import './finances.css';
 import './progress.css';

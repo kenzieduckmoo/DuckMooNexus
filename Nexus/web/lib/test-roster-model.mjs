@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {matches,census,sortRoster,xpFraction} from './roster-model.ts';
+const a={name:'A',race:'Blood Elf',class:'PALADIN',level:80,role:'DAMAGER',realm:'Illidan',tags:['Main'],professionSlots:{open:1,names:['Alchemy']},roster:{xp:801,xpMax:1000,rested:1200,maxLevel:90,realmRegion:'North America',notes:{resume:'Finish the necklace'},reputations:{1:{name:'Silvermoon',renown:4}}},professionRecords:{171:{id:171,name:'Alchemy',expansions:{1:{name:'Midnight Alchemy',rank:20,max:100}}}}};
+const b={...a,name:'B',level:89,role:'HEALER',professionSlots:{open:0,names:['Alchemy','Herbalism']}};
+const c={...a,name:'C',race:'Orc',class:'WARRIOR',level:79,professionSlots:{open:null,names:[]},professionRecords:{},tags:[],roster:{}};
+assert(matches(a,{race:'Blood Elf',levelBand:'80+',slots:'open80',role:'HEALER'}));
+assert(!matches(c,{levelBand:'80+'}));assert(!matches(a,{levelBand:'90+'}));assert(matches(b,{levelBand:'80-89'}));
+assert(matches(a,{profession:'Alchemy',expansion:'Midnight Alchemy',reputation:'Silvermoon',tag:'Main',search:'necklace'}));
+assert(!matches(c,{role:'HEALER'}));assert(matches(c,{slots:'unknown'}));assert(!matches(c,{slots:'open'}));
+assert.equal(sortRoster([a,b],'name','HEALER')[0].name,'B');
+assert.equal(sortRoster([a,{...a,name:'Z',roster:{xp:802,xpMax:1000}}])[0].name,'Z');
+assert.equal(xpFraction(c),null);
+const counts=census([a,b,c]);assert.equal(counts.race['Blood Elf'],2);assert.equal(counts.profession.Alchemy,2);assert.equal(counts.tag.Main,2);assert.equal(counts.levelBand['80-89'],2);assert.equal(counts.region.Unknown,1);
+console.log('Roster model: combined filters, role priority, XP sorting and census passed.');
