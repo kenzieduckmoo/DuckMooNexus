@@ -2,6 +2,16 @@ local _,F=...
 F.Model={};local M=F.Model
 M.Healers={PRIEST=true,SHAMAN=true,PALADIN=true,DRUID=true,MONK=true,EVOKER=true}
 M.Tanks={WARRIOR=true,PALADIN=true,DRUID=true,DEATHKNIGHT=true,MONK=true,DEMONHUNTER=true}
+M.PrimaryIDs={[171]=true,[164]=true,[333]=true,[202]=true,[182]=true,[773]=true,[755]=true,[165]=true,[186]=true,[393]=true,[197]=true}
+M.LevelBands={{id='1-9',name='Level 1-9'},{id='10-19',name='Level 10-19'},{id='20-29',name='Level 20-29'},{id='30-39',name='Level 30-39'},{id='40-49',name='Level 40-49'},{id='50-59',name='Level 50-59'},{id='60-69',name='Level 60-69'},{id='70-79',name='Level 70-79'},{id='80-89',name='Level 80-89'},{id='90+',name='Level 90+'},{id='80+',name='Level 80+'}}
+function M.PrimarySlots(c)
+    local sample=c.primaryProfessions
+    if sample and sample.complete and sample.seenAt and type(sample.count)=='number' and sample.count>=0 and sample.count<=2 then return 2-sample.count,sample.seenAt end
+    if not c.profSeenAt or type(c.professions)~='table'then return nil end
+    local seen={};local count=0
+    for key,p in pairs(c.professions)do local id=tonumber(p.id or key);if M.PrimaryIDs[id]and not seen[id]then seen[id]=true;count=count+1 end end
+    return math.max(0,2-count),c.profSeenAt
+end
 function M.Level(c)
     if c.level and c.maxLevel and c.level>=c.maxLevel then return tostring(c.level) end
     local p=c.xpMax and c.xpMax>0 and math.min(.9999,math.max(0,(c.xp or 0)/c.xpMax)) or 0
@@ -40,6 +50,7 @@ function M.Options(db,kind,profession)
     local found={}
     for _,c in pairs(db.characters) do
         if kind=='class' then if c.class then found[c.class]=c.className or c.class end
+        elseif kind=='race' then if c.race then found[c.race]=c.race end
         elseif kind=='realm' then found[c.realm or '?']=c.realm or '?'
         elseif kind=='tag' then for id,t in pairs(c.tags or {}) do found[id]=t end
         elseif kind=='reputation' then for id,r in pairs(c.reputations or {}) do found[id]=r.name end
@@ -58,6 +69,19 @@ end
 function M.Matches(c,f)
     f=f or {}
     if f.class and c.class~=f.class then return false end
+    if f.race and c.race~=f.race then return false end
+    if f.levelBand then
+        local level=c.level;if type(level)~='number'then return false end
+        local low,high=f.levelBand:match('^(%d+)%-(%d+)$');local minimum=f.levelBand:match('^(%d+)%+$')
+        if low and(level<tonumber(low)or level>tonumber(high))or minimum and level<tonumber(minimum)then return false end
+    end
+    if f.professionSlots then
+        local open=M.PrimarySlots(c)
+        if f.professionSlots=='open80'and not((c.level or 0)>=80 and open and open>0)then return false end
+        if f.professionSlots=='open'and not(open and open>0)then return false end
+        if f.professionSlots=='full'and open~=0 then return false end
+        if f.professionSlots=='unknown'and open~=nil then return false end
+    end
     if f.faction and c.faction~=f.faction then return false end
     if f.realm and c.realm~=f.realm then return false end
     if f.region and c.realmRegion~=f.region then return false end

@@ -556,9 +556,12 @@ function F.Roster()
     F.FilterControl('reputation','Reputation',M.Options(F.db,'reputation'),2*(col+6),106,col)
     F.FilterControl('tag','Tag',M.Options(F.db,'tag'),3*(col+6),106,col)
     F.FilterControl('realm','Realm',M.Options(F.db,'realm'),0,140,col)
-    text('Filters combine. Role searches include capable classes.',col+12,146,w-col-18,'GameFontDisableSmall')
+    F.FilterControl('race','Race',M.Options(F.db,'race'),col+6,140,col)
+    F.FilterControl('levelBand','Level band',M.LevelBands,2*(col+6),140,col)
+    F.FilterControl('professionSlots','Profession slots',{{id='open80',name='Level 80+ / open slot'},{id='open',name='Any open primary slot'},{id='full',name='Both primary slots filled'},{id='unknown',name='Profession slots unknown'}},3*(col+6),140,col)
+    text('Primary slots only; Cooking, Fishing and Archaeology do not use them. Uncaptured data stays unknown.',6,180,w-12,'GameFontDisableSmall')
 
-        base=182
+        base=216
     end
     local entries=M.Roster(F.db,f);F.filteredRoster=entries
     local grouped=not F.flatRoster and not f.role and not f.reputation
@@ -600,8 +603,9 @@ function F.Roster()
             label(row,M.Level(c),w*.41,-8,65);label(row,c.ilvl and string.format('%.1f',c.ilvl)or '?',w*.50,-8,65)
             label(row,M.Rested(c),w*.59,-8,65)
             label(row,M.Plain(f.reputation and M.ReputationText(c.reputations[f.reputation])or M.Spec(c)),w*.70,-6,w*.29,'GameFontHighlightSmall'):SetWordWrap(false)
-            label(row,M.Plain((c.faction or '?')..(f.reputation and c.reputations[f.reputation].accountWide and ' | Warband rep'or '')),w*.70,-26,w*.29,'GameFontDisableSmall'):SetWordWrap(false)
-            tooltip(row,(c.name or '?')..'-'..(c.realm or '?'),{M.Plain(M.Spec(c)),M.Plain(M.TagText(c)),'Last updated: '..stamp(c.lastSeen),'Click to open this character folio.'});y=y+48
+            local open,profAt=M.PrimarySlots(c);local slotText=open and open>0 and (' | '..open..' prof. slot'..(open==1 and ''or 's')..' open')or ''
+            label(row,M.Plain((c.faction or '?')..slotText..(f.reputation and c.reputations[f.reputation].accountWide and ' | Warband rep'or '')),w*.70,-26,w*.29,'GameFontDisableSmall'):SetWordWrap(false)
+            tooltip(row,(c.name or '?')..'-'..(c.realm or '?'),{M.Plain(M.Spec(c)),M.Plain(M.TagText(c)),open and (open..' / 2 primary profession slots open | observed '..stamp(profAt))or 'Primary profession slots not captured.','Last updated: '..stamp(c.lastSeen),'Click to open this character folio.'});y=y+48
         end
     end
     if #entries==0 then text('No recorded character matches. Clear filters or record more characters.',8,y,w-16);y=y+30 end

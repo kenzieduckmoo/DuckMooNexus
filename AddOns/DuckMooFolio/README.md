@@ -1,6 +1,6 @@
 # DuckMoo Services: Character Folio
 
-**v0.5.3, by DuckMoo Media**
+**v0.5.4, by DuckMoo Media**
 
 An adventurer's binder for your alt army: character sheets, searchable warband information, personal plans, and collector field notes. A persistent sidebar, compact character cards, searchable roster, and an autosaving notebook. The original purple palette remains available; Trans Pride uses the exact blue, pink, and white of the supplied flag.
 
@@ -111,3 +111,10 @@ Main windows and standalone dialogs enable native top-level window behavior and 
 ## Bundled user guide
 
 See USER-GUIDE.txt for current installation, commands, collected data, storage, Nexus integration, troubleshooting and limitations. All TOCs use the DuckMoo Media category.
+
+
+## Roster race, level bands and open profession slots (0.5.4)
+
+Open Roster, then Filters. Race and Level band combine with existing class, realm, tag and profession filters. Level bands include decade ranges plus 80+ and 90+. Profession slots offers Level 80+ / open slot, any open primary slot, full, and unknown. These options persist in named saved views. Roster rows and tooltips show recorded open-slot counts and profession observation time.
+
+Only the two primary professions use these slots; Cooking, Fishing and Archaeology do not. New snapshots explicitly capture primary slots, including a genuinely empty list. Partial reads preserve prior observations; completely empty reads are confirmed on a subsequent capture rather than clearing a prior snapshot during login. Legacy snapshots use their recorded profession list/time; characters with no profession observation remain unknown. Offline entries represent the last capture, not live state. Notes and tags are preserved.

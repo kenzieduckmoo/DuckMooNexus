@@ -1,5 +1,6 @@
 import 'server-only';
 import {rows,account as defaultAccount} from './db';
+import {professionSlots} from './profession-slots';
 const clean=(s:unknown)=>typeof s==='string'?s.replace(/\|c[0-9a-fA-F]{8}|\|r/g,'').replace(/\|A:.*?\|a|\|T.*?\|t/g,''):s;
 export async function roster(account=defaultAccount){
  const base=await rows(`SELECT c.character_guid,c.name,c.realm,c.class,c.class_name,c.race,c.faction,c.level,c.item_level,
@@ -15,6 +16,12 @@ export async function roster(account=defaultAccount){
  const seen=new Set(base.map(c=>c.character_guid));
  const extras=await rows(`SELECT DISTINCT ON(character_guid) character_guid,payload->'identity' AS identity,observed_at,source FROM nexus.current_character_extras WHERE namespace=$1 ORDER BY character_guid,observed_at DESC NULLS LAST`,[account]);
  for(const e of extras)if(!seen.has(e.character_guid)&&e.identity?.name&&e.identity?.realm){base.push({...e.identity,character_guid:e.character_guid,class:e.identity.classFile??e.identity.class,last_seen:e.observed_at,snapshot_only:true,source:e.source});seen.add(e.character_guid);}
+ const [folioProfessions,apiProfessions]=await Promise.all([
+  rows(`SELECT character_guid,jsonb_build_object('primaryProfessions',payload->'primaryProfessions','profSeenAt',payload->'profSeenAt','professions',(SELECT jsonb_object_agg(p.key,jsonb_build_object('id',p.value->'id','name',p.value->'name')) FROM jsonb_each(CASE WHEN jsonb_typeof(payload->'professions')='object' THEN payload->'professions' ELSE '{}'::jsonb END) p)) AS payload FROM nexus.current_character_records WHERE namespace=$1 AND source='DuckMooFolio.lua' AND record_kind='profile'`,[account]),
+  rows(`SELECT DISTINCT ON(character_guid) character_guid,jsonb_build_object('character',jsonb_build_object('id',payload->'character'->'id')) || CASE WHEN jsonb_typeof(payload->'primaries')='array' THEN jsonb_build_object('primaries',jsonb_path_query_array(payload,'$.primaries[*].profession')) WHEN payload ? 'primaries' THEN jsonb_build_object('primaries',payload->'primaries') ELSE '{}'::jsonb END AS payload,profile_observed_at,last_checked_at FROM nexus.character_api_documents WHERE namespace=$1 AND endpoint='professions' AND status=200 ORDER BY character_guid,last_checked_at DESC,id DESC`,[account])
+ ]);
+ const folioMap=new Map(folioProfessions.map(r=>[r.character_guid,r])),apiMap=new Map(apiProfessions.map(r=>[r.character_guid,r]));
+ for(const c of base)c.professionSlots=professionSlots(folioMap.get(c.character_guid)??null,apiMap.get(c.character_guid)??null);
  return base;
 }
 export async function character(guid:string,account=defaultAccount){

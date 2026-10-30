@@ -502,3 +502,23 @@ assert(count>=4,'Window stacking was not checked on dialogs')
 print('PASS: main and dialog window render groups survive page and mode changes')
 ''')
 print('All tests passed. Actual Retail client verification is still required.')
+
+lua.execute(r"""
+local M=F.Model
+local c={name='Slots',level=80,race='Human',profSeenAt=NOW,professions={[171]={id=171,name='Alchemy'},[185]={id=185,name='Cooking'},[356]={id=356,name='Fishing'},[794]={id=794,name='Archaeology'}}}
+assert(M.PrimarySlots(c)==1 and M.Matches(c,{professionSlots='open80',race='Human',levelBand='80-89'}))
+assert(not M.Matches(c,{race='Orc'}) and not M.Matches(c,{levelBand='70-79'}))
+c.level=79;assert(not M.Matches(c,{professionSlots='open80'}));c.level=90
+assert(M.Matches(c,{levelBand='90+'}) and not M.Matches(c,{levelBand='80-89'}))
+assert(M.PrimarySlots({professions={}})==nil and not M.Matches({level=90},{professionSlots='open80'}))
+local original,info=GetProfessions,GetProfessionInfo
+GetProfessions=function()return nil,2,nil,3 end
+GetProfessionInfo=function(i)if i==2 then return 'Alchemy',1,1,100,0,0,171 end;return 'Fishing',1,1,100,0,0,356 end
+F.Professions(c);assert(c.primaryProfessions.count==1 and M.PrimarySlots(c)==1,'Sparse first primary slot lost second profession')
+local before=c.primaryProfessions;GetProfessionInfo=function()return nil end;F.Professions(c);assert(c.primaryProfessions==before,'Partial read erased valid slot capture')
+GetProfessions=function()return nil end;F.Professions(c);assert(c.primaryProfessions==before,'Unconfirmed empty login erased prior capture')
+NOW=NOW+2;F.Professions(c);assert(c.primaryProfessions.count==0 and M.PrimarySlots(c)==2)
+GetProfessions,GetProfessionInfo=original,info
+F.filters={race='Human',levelBand='80+',professionSlots='open80'};assert(F.SaveRosterView('Slot test'));F.filters={};F.ApplyRosterView('Slot test');assert(F.filters.race=='Human' and F.filters.levelBand=='80+' and F.filters.professionSlots=='open80')
+print('PASS: race/level bands, primary slot filters, sparse/empty/partial captures and saved-view persistence')
+""")

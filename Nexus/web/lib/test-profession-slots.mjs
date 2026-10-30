@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {professionSlots,hasOpenProfession} from './profession-slots.ts';
+const folio={payload:{profSeenAt:1000,professions:{171:{id:171,name:'Alchemy'},185:{id:185,name:'Cooking'},356:{id:356,name:'Fishing'},794:{id:794,name:'Archaeology'}}}};
+assert.equal(professionSlots(folio,null).open,1);
+assert.equal(professionSlots(null,null).open,null);
+assert.equal(professionSlots({payload:{professions:{}}},null).open,null);
+const empty={payload:{primaryProfessions:{complete:true,count:0,professions:[],seenAt:2000}}};
+assert.equal(professionSlots(empty,null).open,2);
+const api={payload:{primaries:[{profession:{id:171,name:'Alchemy'}},{profession:{id:182,name:'Herbalism'}}]},profile_observed_at:new Date(3000*1000).toISOString()};
+assert.equal(professionSlots(folio,api).open,0);
+assert.equal(professionSlots({payload:{primaryProfessions:{complete:true,count:1,professions:[{id:171,name:'Alchemy'}],seenAt:4000}}},api).open,1);
+assert.equal(professionSlots(null,{...api,payload:{primaries:[]}}).open,2);
+assert.equal(professionSlots(null,{...api,payload:{primaries:[{profession:{id:999999}}]}}).open,null);
+assert.equal(hasOpenProfession({level:80,professionSlots:{open:1}}),true);
+assert.equal(hasOpenProfession({level:79,professionSlots:{open:1}}),false);
+assert.equal(hasOpenProfession({level:90,professionSlots:{open:null}}),false);
+console.log('Profession slots: primary/secondary separation, explicit empty/unknown, source freshness and level-80 boundary passed.');
+
+assert.equal(professionSlots(null,{...api,payload:{character:{id:123}}}).open,2);
+assert.equal(professionSlots(null,{...api,payload:{character:{id:123},primaries:null}}).open,null);

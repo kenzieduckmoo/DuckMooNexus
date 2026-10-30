@@ -1,3 +1,10 @@
+# v0.5.4
+
+- Add roster race and level-band filters, plus primary-profession slot filters including level 80+ with an open slot. Save these in named roster views.
+- Show open slots and source age in the roster; distinguish unknown from empty profession data and exclude secondary professions.
+- Capture explicit primary-profession observations, preserve valid data on partial reads, and confirm entirely empty reads before replacement. Preserve notes and tags.
+- Validate combined filters, saved views, sparse profession slots, missing/partial reads and confirmed zero professions under Lua 5.1. Native client verification remains separate.
+
 # v0.5.3
 
 - Correct cross-profession parent/child context handling without deleting historical observations.

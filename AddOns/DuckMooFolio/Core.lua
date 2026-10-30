@@ -1,6 +1,6 @@
 local addon,F=...
 DuckMooFolio=F
-F.name=addon;F.version='0.5.3';F.Model=F.Model or {}
+F.name=addon;F.version='0.5.4';F.Model=F.Model or {}
 local M=F.Model
 function F.Safe(fn,...)
     if type(fn)~='function' then return nil end
@@ -46,7 +46,7 @@ function F.Init()
     F.filters={};F.tab='sheet';F.page=1
 end
 -- Store only supported filter values; drafts and saved views never share tables.
-local viewKeys={class=true,role=true,faction=true,region=true,profession=true,expansion=true,reputation=true,tag=true,sort=true,realm=true,search=true}
+local viewKeys={class=true,race=true,levelBand=true,professionSlots=true,role=true,faction=true,region=true,profession=true,expansion=true,reputation=true,tag=true,sort=true,realm=true,search=true}
 local function viewFilters(source)
     local out={}
     for key in pairs(viewKeys) do
@@ -113,15 +113,31 @@ function F.Reputations(c)
 end
 function F.Professions(c)
     if type(GetProfessions)~='function' then return end
-    local slots={GetProfessions()};local active={}
-    for _,index in pairs(slots) do
+    local result={pcall(GetProfessions)};if not result[1]then return end
+    local any=false;for i=2,7 do if result[i]then any=true end end
+    if not any then
+        F.emptyProfessionAt=F.emptyProfessionAt or {}
+        local key=c.guid or F.current or 'current';local previous=F.emptyProfessionAt[key]
+        if not previous then F.emptyProfessionAt[key]=F.Now();return end
+        if F.Now()-previous<1 then return end
+    else if F.emptyProfessionAt then F.emptyProfessionAt[c.guid or F.current or 'current']=nil end end
+    local active={};local primaries={};local complete=true
+    for slot=2,7 do
+        local index=result[slot]
+        if index then
         local name,icon,rank,max,_,_,id=S(GetProfessionInfo,index)
+        if not name or not id then complete=false end
         if name and id and id~=794 then
             local p=c.professions[id] or {expansions={}}
             p.name=name;p.icon=icon;p.rank=rank;p.max=max;p.id=id;p.expansions=p.expansions or {};active[id]=p
+            if slot<=3 then primaries[#primaries+1]={id=id,name=name}end
+        end
         end
     end
-    if next(active) then c.professions=active;c.profSeenAt=F.Now() end
+    if complete then
+        c.professions=active;c.profSeenAt=F.Now()
+        c.primaryProfessions={complete=true,count=#primaries,professions=primaries,seenAt=c.profSeenAt}
+    end
 end
 function F.DiscoverProfession()
     local api=C_TradeSkillUI;local c=F.Current()

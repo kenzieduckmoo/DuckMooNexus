@@ -122,3 +122,16 @@ Include addon version, client build/locale, command/page, steps and exact error,
 plus whether the data was current or an offline snapshot. Inspect timestamps
 before treating missing data as zero. Share a minimal redacted sample only when
 needed; notes, names, character histories and credentials should stay private.
+
+
+ROSTER FILTERS AND OPEN PROFESSIONS (0.5.4)
+Roster > Filters now includes Race, Level band and Profession slots. Choose
+Level 80+ / open slot to find characters ready for a new primary profession.
+All filters combine and can be stored with Saved views / Save view.
+Open primary-slot counts appear on roster rows and in their tooltips.
+Cooking, Fishing and Archaeology do not consume a primary slot. Missing data is
+unknown, not an empty profession slot. Offline rows use their last observation.
+New captures explicitly record both primary slots, including confirmed empties;
+partial login reads preserve earlier data. Notes and tags are unchanged.
+After updating, reload WoW and use /folio scan, then save/reload or log out so
+the updated observation can sync to Nexus.
