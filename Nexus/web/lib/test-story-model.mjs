@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {blankStory,validateStory,biography,storyExport,eventText} from './story-model.ts';
+const data={client:'forever',selected:{name:'Example',realm:'Test realm',profile:{level:40},life:{startedAt:1000,startLevel:1,highestLevel:40,mode:'hardcore'}},summary:{total:50,quests:25,victories:2,achievements:1},highlights:[{id:'a'.repeat(64),observed_at:'2026-10-31T10:00:00Z',payload:{kind:'level',data:{level:40}}}]};
+assert(biography(data).join(' ').includes('No terminal Hardcore death'));
+assert(biography({...data,selected:{...data.selected,life:{...data.selected.life,endedAt:2000}}}).join(' ').includes('Killer and cause of death are not established'));
+const doc=validateStory({...blankStory(),backstory:'A personal beginning',moments:[{id:'one',title:'My memory',note:'Remembered, not observed',at:'2026-10-31T10:00:00Z',eventID:null}]});
+assert(storyExport(data,doc).includes('Personal recollection; not game-verified'));
+assert(storyExport(data,doc,'outline').includes('Gameplay footage, narration and music are not generated'));
+assert(storyExport(data,doc).includes('a'.repeat(64)));
+assert.equal(eventText(data.highlights[0]),'Reached level 40');
+assert.throws(()=>validateStory({...doc,moments:[...doc.moments,...doc.moments]}),/unique/);
+assert.throws(()=>validateStory({...doc,notes:'x'.repeat(20001)}),/too long/);
+assert.throws(()=>validateStory({...doc,moments:[{...doc.moments[0],eventID:'foreign'}]}),/captured event/);
+assert.throws(()=>validateStory({...doc,moments:[{...doc.moments[0],at:'not a date'}]}),/date/);
+console.log('Story model: lifecycle evidence, exports, personal attribution and validation passed.');

@@ -3,7 +3,7 @@ import {rows,account} from '@/lib/db';
 export const dynamic='force-dynamic';
 export async function GET(){try{
  const [version]=await rows(`SELECT
-   (SELECT max(id)::text FROM nexus.source_snapshots WHERE namespace=$1) AS sources,
+   (SELECT max(id)::text FROM nexus.source_snapshots WHERE namespace IN($1,'forever-main-account')) AS sources,
    (SELECT max(id)::text FROM nexus.api_snapshots) AS market,
    (SELECT max(last_checked_at)::text FROM nexus.character_api_documents WHERE namespace=$1) AS characters,
    (SELECT max(updated_at)::text FROM nexus.crafting_documents WHERE namespace=$1) AS documents`,[account]);
