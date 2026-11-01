@@ -135,3 +135,67 @@ New captures explicitly record both primary slots, including confirmed empties;
 partial login reads preserve earlier data. Notes and tags are unchanged.
 After updating, reload WoW and use /folio scan, then save/reload or log out so
 the updated observation can sync to Nexus.
+
+
+UPDATED ATT COLLECTION LEADS (VERSION 0.5.5)
+The ATT component now includes the relevant Fia ATDART 0.1.7 fixes. You do not
+need FiammaCollector installed. Both addons may be installed together: Folio
+keeps its own SavedVariables, diagnostic window and slash commands.
+
+Fully exit and restart WoW after installing 0.5.5. Two new Lua modules were
+added; a hot file update can leave them unloaded. /folio version should print
+0.5.5. Open Collection leads, enable ATT and let its main list prepare, then
+Refresh opportunities. Existing notes, tags, settings and snapshots are retained.
+
+Instance percentages now come from ATT's canonical main Dungeons & Raids rows.
+Alternate, nested and dynamic references cannot override the main totals, and
+conflicting canonical entries are omitted instead of guessed. Old snapshots are
+labelled until refreshed. Dawn of the Infinite is excluded only from the random
+ATDART target; it remains in ordinary dungeon rankings. Other saved targets stay
+stable. Legacy still stops at Dragonflight, with unknown expansions excluded.
+
+Quest counts require actual ATT Quest objects. Mount customization collectibles
+with questID unlock flags and hidden tracking quests are excluded. Counts follow
+ATT's active account/character profile and filters. A current-character-only
+filter is not forced over an account-wide profile. Click a quest zone for its
+saved counted IDs, copyable report and an optional ATT zone window.
+
+Scanning uses canonical outdoor/instance roots where identifiable, with a full
+fallback for unfamiliar layouts. It skips irrelevant instance loot, caches
+static map/instance metadata, builds diagnostic paths only for retained rows or
+errors, and visits child lists incrementally. Work slices target four
+milliseconds; individual ATT getters can take longer than this soft budget.
+Progress redraws Collection leads only, leaving other pages alone.
+
+Refresh becomes Stop scan while active. The status shows visited nodes, queued
+branches and elapsed time. Branch count is not a percentage. Stop scan or
+/folio att cancel retains the prior completed snapshot. Old cancelled callbacks
+cannot overwrite a replacement scan. Errors during scheduling, metadata reads
+or completion clear busy state and can be inspected with /folio att error.
+Runaway scans stop after three minutes or two million nodes with an explicit
+error and preserve the old snapshot rather than remaining indefinitely busy.
+
+Commands (replace /folio with /dmfolio if preferred):
+/folio att                         Open Collection leads.
+/folio att refresh                 Refresh, or stop the current scan.
+/folio att cancel                  Stop without replacing saved results.
+/folio att stats                   Live progress or last completed timing.
+/folio version                     Loaded Folio version.
+/folio att version                 Same loaded-version check.
+/folio att debug on                Extra diagnostics on the next Refresh.
+/folio att debug off               Stop further extra diagnostics now.
+/folio att debug                   Toggle extra diagnostics.
+/folio att quests                  Choose a saved quest-zone report.
+/folio att quests 2133              Choose a report by map ID.
+/folio att quests Zaralek Cavern    Choose by full zone name.
+/folio att quest 73085              Open ATT's quest window outside combat.
+/folio att error                   Show the last saved capture error.
+
+Debug off is safe to repeat. Earlier detailed reports are not erased, and a
+report notes when diagnostics stopped partway through a scan. Normal captures
+still retain counted quest IDs/names. Debug on takes effect on a new Refresh.
+The separate /atdart commands still belong to Fia's addon if installed.
+
+Code and UI-mock checks pass, including personal-data preservation. Actual
+Retail behavior and scan timing must be confirmed after restarting the game.
+Do not delete SavedVariables to resolve an ATT scan issue.

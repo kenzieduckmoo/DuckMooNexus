@@ -1,6 +1,6 @@
 local addon,F=...
 DuckMooFolio=F
-F.name=addon;F.version='0.5.4';F.Model=F.Model or {}
+F.name=addon;F.version='0.5.5';F.Model=F.Model or {}
 local M=F.Model
 function F.Safe(fn,...)
     if type(fn)~='function' then return nil end
@@ -11,6 +11,19 @@ function F.Safe(fn,...)
     return unpack(results,2,results.n)
 end
 local S=F.Safe
+function F.DrawATTIfShown()if F.tab=='att'then F.DrawIfShown()end end
+-- These controls belong to Folio; never register Fia's /atdart slash aliases.
+function F.ReadATT(node,key)return F.Safe(function()return node[key]end)end
+function F.IsATTQuest(node)return F.ReadATT(node,'key')=='questID' and not F.ReadATT(node,'isHQT')end
+function F.ATTLabel(node)
+    local value=F.ReadATT(node,'text') or F.ReadATT(node,'name')
+    return type(value)=='string' and F.Model.Display(value) or nil
+end
+function F.DebugReady()
+    if type(F.RecordQuestDebug)=='function' and type(F.ShowQuestDebug)=='function' and type(F.RefreshATTControl)=='function'then return true end
+    F.attMessage='ATT diagnostics are not loaded. Fully exit WoW and reopen it to load the new addon files.'
+    F.Print(F.attMessage);F.DrawIfShown();return false
+end
 function F.Clean(value,depth)
     if issecretvalue and issecretvalue(value) then return nil end
     local kind=type(value)
@@ -307,7 +320,9 @@ F.events=events
 SLASH_DUCKMOOFOLIO1='/folio';SLASH_DUCKMOOFOLIO2='/dmfolio'
 SlashCmdList.DUCKMOOFOLIO=function(cmd)
     cmd=(cmd or ''):lower():match('^%s*(.-)%s*$')
-    if cmd=='scan' then F.Snapshot(true);F.DiscoverProfession();F.Print('Current character refreshed. Open each profession for expansion details.')
+    if cmd=='version' then F.Print('Loaded runtime '..F.version..'. Reload WoW after updating files.')
+    elseif cmd=='att' or cmd:match('^att%s') then if type(F.ATTCommand)~='function'then F.DebugReady();return end;F.ATTCommand(cmd:match('^att%s*(.*)$'))
+    elseif cmd=='scan' then F.Snapshot(true);F.DiscoverProfession();F.Print('Current character refreshed. Open each profession for expansion details.')
     elseif cmd=='minimap' then F.db.settings.hideMinimap=not F.db.settings.hideMinimap;F.CreateMinimap()
     else F.Show(cmd=='roster' and 'roster' or 'sheet') end
 end

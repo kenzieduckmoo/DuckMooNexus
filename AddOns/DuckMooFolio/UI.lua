@@ -687,10 +687,13 @@ function F.Collection(c)
     if F.attMessage then text(F.attMessage,8,y,F.width-16):SetHeight(40);y=y+48 end
     if app then
         button(F.content,'Open ATT',4,-y,110,F.OpenATT)
-        if F.selected==F.current then button(F.content,F.attBusy and 'Reading...' or 'Refresh opportunities',122,-y,180,F.RefreshATT) end
+        if F.attBusy or F.selected==F.current then button(F.content,F.attBusy and 'Stop scan' or 'Refresh opportunities',122,-y,180,function()if F.DebugReady()then F.RefreshATTControl()end end) end
+        button(F.content,'Scan stats',310,-y,90,function()if F.DebugReady()then F.ATTStats()end end)
         y=y+38
     end
     local snapshot=c.att
+    if snapshot and(snapshot.schema or 0)<4 then text('Older ATT counts: Refresh on this character to use canonical instance totals.',8,y,F.width-16):SetHeight(32);y=y+40
+    elseif snapshot and(snapshot.schema or 0)<6 then text('Older quest counts: Refresh to exclude non-quest unlock flags.',8,y,F.width-16):SetHeight(32);y=y+40 end
     if not snapshot then
         text('No ATT snapshot for this character yet. Log into them, enable ATT, open its main list, and click Refresh opportunities.',8,y,F.width-16):SetHeight(60);F.content:SetHeight(y+75);return
     end
@@ -723,7 +726,9 @@ function F.Collection(c)
         for _,r in ipairs(list) do
             local expansionName=F.ATTExpansionLabel(r,v[2]=='zones')
             if not expansion or expansionName==expansion then
-                local row=card(0,y,F.width,43)
+                local row
+                if v[2]=='zones' then local zone=r;row=button(F.content,'',0,-y,F.width,function()if F.DebugReady()then F.ShowQuestDebug(zone,c,snapshot)end end);row:SetHeight(43);tooltip(row,'Quest count report',{'Click for counted quest IDs and ATT evidence.','/folio att debug on then Refresh includes extra diagnostics.'})
+                else row=card(0,y,F.width,43)end
                 label(row,M.Plain(M.Display(r.name)),8,-6,F.width-150)
                 label(row,r.missing..(v[2]=='zones' and ' quests' or ' missing'),F.width-140,-6,130,'GameFontNormal')
                 label(row,M.Plain(expansionName),8,-25,F.width-16,'GameFontDisableSmall');y=y+48;shown=shown+1

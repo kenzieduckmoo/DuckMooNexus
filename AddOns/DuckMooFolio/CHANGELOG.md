@@ -1,3 +1,12 @@
+# v0.5.5
+
+- Bring the ATT scanner up to the relevant Fia ATDART 0.1.7 logic: canonical instance totals, ambiguous/reference handling, Dawn-only target exclusion and true quest-object counting.
+- Add Folio-owned quest reports, safe lazy-field reads, copyable errors and debug on/off with immediate in-flight disable behavior.
+- Add canonical category scoping, metadata caching, loot pruning, incremental/time-budgeted traversal, live progress, Stop scan and failure recovery.
+- Add `/folio att` controls for refresh/cancel/stats/debug/quests/quest/error/version without claiming `/atdart`. Mark old snapshots for refresh without deleting them.
+- Preserve Folio notes, tags, saved roster views, filters, profile observations and offline data. Scan progress does not redraw other pages.
+- Existing and ported Lua 5.1 checks pass. Actual Retail/ATT compatibility and speed remain live-client checks. Fully restart WoW after installing the new modules.
+
 # v0.5.4
 
 - Add roster race and level-band filters, plus primary-profession slot filters including level 80+ with an open slot. Save these in named roster views.

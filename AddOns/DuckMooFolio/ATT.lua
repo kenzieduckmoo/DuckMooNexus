@@ -19,14 +19,56 @@ function F.ATTNodeTier(node,fallback)
     end
     return numberTier(fallback)
 end
+local mapCache,mapReader={},nil
+function F.ATTMapInfo(mapID)
+    local reader=C_Map and C_Map.GetMapInfo
+    if reader~=mapReader then mapCache={};mapReader=reader end
+    if mapCache[mapID]then return mapCache[mapID]end
+    local map=F.Safe(reader,mapID)
+    -- Retry unready map data later; only static usable metadata is cached.
+    if map and map.mapType then mapCache[mapID]=map end
+    return map
+end
 function F.ATTMapTier(mapID)
     local seen={}
     while mapID and not seen[mapID]do
         seen[mapID]=true
         if mapTiers[mapID]then return mapTiers[mapID]end
-        local map=F.Safe(C_Map and C_Map.GetMapInfo,mapID)
+        local map=F.ATTMapInfo(mapID)
         mapID=map and map.parentMapID
     end
+end
+-- Build labels/paths only for retained quest rows or an actual failure.
+function F.ATTPath(frame)
+    local parts={};local size=0
+    while frame and size<1000 do
+        local n=frame.node
+        local label=F.ATTLabel(n) or (F.ReadATT(n,'mapID') and 'mapID '..F.ReadATT(n,'mapID')) or (F.ReadATT(n,'headerID') and 'headerID '..F.ReadATT(n,'headerID')) or (F.ReadATT(n,'questID') and 'questID '..F.ReadATT(n,'questID')) or 'group'
+        parts[#parts+1]=label;size=size+#label+3;frame=frame.parent
+    end
+    local ordered={};for i=#parts,1,-1 do ordered[#ordered+1]=parts[i]end
+    return table.concat(ordered,' > '):sub(-900)
+end
+local journalCache
+local function journalMetadata()
+    local selected=F.Safe(EJ_GetCurrentTier);local num=F.Safe(EJ_GetNumTiers) or 0
+    local now=F.Now()
+    if journalCache and journalCache.reader==EJ_GetInstanceByIndex and journalCache.selector==EJ_SelectTier and journalCache.num==num and now-journalCache.at<300 then return journalCache.kinds,journalCache.tiers end
+    local kinds,tiers={},{}
+    if selected and num>0 then
+        for tier=1,num do
+            F.Safe(EJ_SelectTier,tier)
+            for _,raid in ipairs({false,true})do
+                for i=1,100 do
+                    local id=F.Safe(EJ_GetInstanceByIndex,i,raid);if not id then break end
+                    kinds[id]=raid and 'raid' or 'dungeon';tiers[id]=tier
+                end
+            end
+        end
+        F.Safe(EJ_SelectTier,selected)
+        if next(kinds)then journalCache={reader=EJ_GetInstanceByIndex,selector=EJ_SelectTier,num=num,at=now,kinds=kinds,tiers=tiers}end
+    end
+    return kinds,tiers
 end
 function F.ATTExpansionLabel(row,zone)
     local tier=numberTier(row.tier)
@@ -41,10 +83,13 @@ function F.IsLegacyATT(row)
 end
 -- Compare exact completion fractions, rather than rounded display values.
 -- Pick a tied minimum only when a snapshot is captured or first upgraded.
+-- Encounter Journal ID; exclude only from ATDART, not the captured rankings.
+local atdartExcluded={[1209]=true} -- Dawn of the Infinite
+local function excludedATDART(row)return row and atdartExcluded[tonumber(row.instanceID)]end
 function F.SelectATDART(snapshot,random)
     local candidates={};local best
     for _,row in ipairs(snapshot.completion or {})do
-        if F.IsLegacyATT(row) and type(row.total)=='number' and row.total>0 and type(row.progress)=='number' and row.progress>=0 and row.progress<=row.total then
+        if not excludedATDART(row) and F.IsLegacyATT(row) and type(row.total)=='number' and row.total>0 and type(row.progress)=='number' and row.progress>=0 and row.progress<=row.total then
             local compare=best and row.progress*best.total-best.progress*row.total or -1
             if compare<0 then best=row;candidates={row}
             elseif compare==0 then candidates[#candidates+1]=row end
@@ -56,7 +101,12 @@ function F.SelectATDART(snapshot,random)
     return snapshot.atdart
 end
 function F.GetATDART(snapshot)
-    if not snapshot.targetEvaluated then F.SelectATDART(snapshot)end
+    -- Old captures may contain alternate/reference instance groups. Do not
+    -- present their cached percentages as if they were main-list completion.
+    if (snapshot.schema or 0)<4 then return nil end
+    -- Repair an already-saved Dawn target, including offline captures, once.
+    -- Other saved targets keep their existing random tie selection.
+    if not snapshot.targetEvaluated or excludedATDART(snapshot.atdart)then F.SelectATDART(snapshot)end
     return snapshot.atdart
 end
 function F.ATTStatus()
@@ -67,55 +117,81 @@ function F.ATTStatus()
     return app,nil,prime.data
 end
 function F.RefreshATT()
+    if F.Safe(InCombatLockdown)then F.attMessage='Refresh after combat.';F.DrawATTIfShown();return end
+    if not F.DebugReady()then return end
     local app,message,root=F.ATTStatus()
-    if not app then F.attMessage=message;F.DrawIfShown();return end
+    if not app then F.attMessage=message;F.DrawATTIfShown();return end
     if F.attBusy then return end
-    F.attBusy=true;F.attMessage='Reading ATT collection opportunities...';F.DrawIfShown()
     local guid=F.current;local c=F.db.characters[guid]
-    local stack={{node=root}};local visited={};local instances={};local zones={};local count=0
     local H=app.HeaderConstants or {}
-    local journalKinds={};local journalTiers={}
-    -- Encounter Journal IDs match ATT instanceID. Restore the user's tier.
-    local selected=F.Safe(EJ_GetCurrentTier)
-    if selected then
-        for tier=1,(F.Safe(EJ_GetNumTiers) or 0) do
-            F.Safe(EJ_SelectTier,tier)
-            for _,isRaid in ipairs({false,true}) do
-                local i=1
-                while i<=100 do
-                    local id=F.Safe(EJ_GetInstanceByIndex,i,isRaid)
-                    if not id then break end
-                    journalKinds[id]=isRaid and 'raid' or 'dungeon';journalTiers[id]=tier;i=i+1
-                end
-            end
-        end
-        F.Safe(EJ_SelectTier,selected)
+    -- ATT repeats instance IDs in achievements, professions, seasonal shortcuts
+    -- and difficulty/reference groups. Only its actual Dungeons & Raids section
+    -- owns the completion shown in the main list.
+    local instanceRoot,zoneRoot
+    for _,node in ipairs(root.g or {})do
+        if H.DUNGEONS_AND_RAIDS and node.headerID==H.DUNGEONS_AND_RAIDS then instanceRoot=node end
+        if H.OUTDOOR_ZONES and node.headerID==H.OUTDOOR_ZONES and not node.sourceIgnored and not node.dynamicID and not node.dynamic_withsubgroups then zoneRoot=node end
     end
-    local function step()
-        local ok,err=pcall(function()
-            local budget=0
-            while #stack>0 and budget<350 do
-                local frame=table.remove(stack);local n=frame.node
+    if not instanceRoot then
+        F.attBusy=false;F.attMessage='Open ATT Dungeons & Raids, then Refresh to capture instance counts.';F.DrawATTIfShown();return
+    end
+    F.attBusy=true;F.attMessage='Reading ATT collection opportunities...';F.DrawATTIfShown()
+    local run={};F.attRun=run
+    -- Prefer ATT's actual outdoor category over duplicate achievement/profession
+    -- and dynamic-window references. Unknown layouts keep the broad fallback.
+    local stack=zoneRoot and {{node=instanceRoot},{node=zoneRoot}} or {{node=root}};local visited={};local canonicalVisited={};local instances={};local ambiguous={};local zones={};local count=0
+    local questDebug={enabled=not not F.db.settings.questDebug,used=0}
+    F.activeQuestDebug=questDebug
+    local context={stage='starting capture'}
+    local started=F.Safe(GetTimePreciseSec) or F.Now()
+    local journalKinds,journalTiers
+    local intrinsicTiers={};local batches,pruned=0,0;local activeFrame
+    local clock=type(debugprofilestop)=='function' and debugprofilestop or nil
+    local step
+    local lastDraw=started
+    local function work()
+            if not journalKinds then context.stage='reading Encounter Journal metadata';journalKinds,journalTiers=journalMetadata()end
+            local elapsed=(F.Safe(GetTimePreciseSec) or F.Now())-started
+            if elapsed>180 or count>2000000 then error('Capture exceeded its bounded work limit; previous snapshot retained. Stop ATT activity and retry.')end
+            local budget=0;local slice=clock and clock();batches=batches+1
+            while #stack>0 and budget<(clock and 4000 or 350) do
+                local frame=table.remove(stack)
+                -- Resume one child at a time, so a huge lazy g list does not
+                -- allocate the entire work stack in one unbudgeted loop.
+                if frame.children then
+                    local cursor=frame;local child=cursor.children[cursor.index];cursor.index=cursor.index-1
+                    if cursor.index>0 then stack[#stack+1]=cursor end
+                    frame={node=child,parent=cursor.parent,kind=cursor.kind,tier=cursor.tier,zone=cursor.zone,inInstances=cursor.inInstances,reference=cursor.reference,instanceParent=cursor.instanceParent}
+                end
+                local n=frame.node
+                activeFrame=frame;context={stage='reading ATT node',visited=count+1,mapID=frame.zone}
                 budget=budget+1;count=count+1
-                if type(n)=='table' and not visited[n] then
-                    visited[n]=true
-                    local kind=frame.kind;local tier=F.ATTNodeTier(n,frame.tier)
+                if type(n)=='table' then
+                    local inInstances=frame.inInstances or n==instanceRoot
+                    local reference=frame.reference or n.sourceIgnored or n.dynamicID or n.dynamic_withsubgroups
+                    local seen=inInstances and not reference and not frame.instanceParent and canonicalVisited or visited
+                    if not seen[n]then
+                    seen[n]=true
+                    local kind=frame.kind;local own=intrinsicTiers[n]
+                    if own==nil then own=F.ATTNodeTier(n) or false;intrinsicTiers[n]=own end
+                    local tier=own or numberTier(frame.tier)
+                    context.questID=F.ReadATT(n,'questID');context.instanceID=F.ReadATT(n,'instanceID')
                     if H.RAIDS and n.headerID==H.RAIDS then kind='raid' end
                     if H.DUNGEONS and n.headerID==H.DUNGEONS then kind='dungeon' end
                     local zone=frame.zone
                     if n.instanceID then
+                        if not journalKinds[n.instanceID] then journalCache=nil end
                         kind=journalKinds[n.instanceID] or kind;tier=tier or journalTiers[n.instanceID]
                         zone=nil
                         local total,progress=n.total,n.progress
-                        if kind and type(total)=='number' and type(progress)=='number' and total>0 and progress>=0 and progress<=total and n.visible~=false and tier and tier<=10 then
+                        if inInstances and not reference and not frame.instanceParent and kind and type(total)=='number' and type(progress)=='number' and total>0 and progress>=0 and progress<=total and n.visible~=false and tier and tier<=10 then
                             local key=kind..':'..n.instanceID
                             local old=instances[key];local missing=total-progress
-                            if not old or missing>old.missing then
-                                instances[key]={name=F.Clean(n.text) or ('Instance '..n.instanceID),missing=missing,total=total,progress=progress,kind=kind,expansion=tiers[tier],tier=tier,instanceID=n.instanceID}
-                            end
+                            if old and(old.total~=total or old.progress~=progress)then ambiguous[key]=true end
+                            if not old then instances[key]={name=F.Clean(n.text) or ('Instance '..n.instanceID),missing=missing,total=total,progress=progress,kind=kind,expansion=tiers[tier],tier=tier,instanceID=n.instanceID}end
                         end
                     elseif not kind and n.mapID then
-                        local map=F.Safe(C_Map and C_Map.GetMapInfo,n.mapID)
+                        local map=F.ATTMapInfo(n.mapID)
                         if map and map.mapType==3 then
                             zone=not capitals[n.mapID] and n.mapID or nil
                             if zone then
@@ -125,36 +201,74 @@ function F.RefreshATT()
                             end
                         end
                     end
-                    if zone and n.questID and not n.collected and n.visible~=false and n.collectible then
-                        local eligible=not app.GroupFilter or F.Safe(app.GroupFilter,n)
-                        local z=zones[zone]
-                        if eligible and z and not z.quests[n.questID] then z.quests[n.questID]=true;z.missing=z.missing+1 end
+                    if zone and n.questID then
+                        local z=zones[zone];local eligible;local status
+                        if not F.IsATTQuest(n)then status='excluded: not a quest object'
+                        elseif n.collected then status='excluded: collected'
+                        elseif n.visible==false then status='excluded: hidden'
+                        elseif not n.collectible then status='excluded: not collectible'
+                        else
+                            eligible=not app.GroupFilter or F.Safe(app.GroupFilter,n)
+                            if not eligible then status='excluded: group filter'
+                            elseif z and z.quests[n.questID]then status='duplicate'
+                            else status='counted';if z then z.quests[n.questID]=true;z.missing=z.missing+1 end end
+                        end
+                        if z then context.stage='recording quest diagnostics';F.RecordQuestDebug(app,z,n,status,nil,reference,eligible,questDebug,frame)end
                     end
-                    if n.visible~=false then
-                        for _,child in ipairs(n.g or {}) do stack[#stack+1]={node=child,kind=kind,tier=tier,zone=zone} end
+                    -- A classified instance owns aggregate totals. Its children
+                    -- cannot be canonical instances or outdoor quest zones.
+                    if n.instanceID and kind then pruned=pruned+1
+                    elseif n.visible~=false then
+                        local children=n.g or {}
+                        if #children>0 then stack[#stack+1]={children=children,index=#children,kind=kind,tier=tier,zone=zone,parent=frame,inInstances=inInstances,reference=reference,instanceParent=frame.instanceParent or n.instanceID}end
+                    end
                     end
                 end
+                if clock and budget%16==0 and clock()-slice>=4 then break end
             end
-        end)
-        if not ok then
-            F.attBusy=false;F.attMessage='ATT data could not be read by this version of the adapter. Update ATT and try Refresh. No collection data was changed.';F.DrawIfShown();return
+        run.nodes=count;run.pending=#stack;run.elapsed=math.max(0,(F.Safe(GetTimePreciseSec) or F.Now())-started)
+        if #stack>0 then
+            local now=F.Safe(GetTimePreciseSec) or F.Now()
+            if now-lastDraw>=1 then lastDraw=now;F.attMessage=string.format('Reading ATT: %d nodes, %d branches queued, %.1fs elapsed. Click Stop to retain the previous snapshot.',count,#stack,run.elapsed);F.DrawATTIfShown()end
+            C_Timer.After(.01,step);return
         end
-        if #stack>0 then C_Timer.After(.01,step);return end
-        local result={schema=3,seenAt=F.Now(),mode=F.Clean(root.modeString) or 'ATT active profile',dungeons={},raids={},zones={},completion={}}
-        for _,r in pairs(instances) do
+        context.stage='finishing capture'
+        local result={schema=6,seenAt=F.Now(),mode=F.Clean(root.modeString) or 'ATT active profile',attVersion=F.Safe(C_AddOns and C_AddOns.GetAddOnMetadata,'AllTheThings','Version'),questDebug=questDebug.enabled,dungeons={},raids={},zones={},completion={},instanceSource=instanceRoot and'main Dungeons & Raids'or'unavailable',ambiguousInstances=0}
+        result.questDebug=not not questDebug.usedDetailed;result.questDebugStopped=questDebug.stopped or nil
+        result.scan={scope=zoneRoot and 'main instances + outdoor zones' or 'full-tree fallback',nodes=count,batches=batches,prunedInstances=pruned,elapsedSeconds=math.max(0,(F.Safe(GetTimePreciseSec) or F.Now())-started),detailedDebug=result.questDebug}
+        for key,r in pairs(instances) do
+            if ambiguous[key]then result.ambiguousInstances=result.ambiguousInstances+1
+            else
             result.completion[#result.completion+1]=r
             if r.missing>0 then table.insert(r.kind=='raid' and result.raids or result.dungeons,r)end
+            end
         end
         table.sort(result.completion,function(a,b)return a.kind..':'..a.instanceID<b.kind..':'..b.instanceID end)
         F.SelectATDART(result)
         for _,r in pairs(zones) do if r.missing>0 then r.quests=nil;result.zones[#result.zones+1]=r end end
         for _,list in ipairs({result.dungeons,result.raids,result.zones}) do table.sort(list,function(a,b)if a.missing~=b.missing then return a.missing>b.missing end;return a.name<b.name end) end
         if F.db.characters[guid] then F.db.characters[guid].att=result end
-        F.attBusy=false;F.attMessage=nil;F.DrawIfShown()
+        run.done=true;F.attBusy=false;F.attRun=nil;F.activeQuestDebug=nil;F.attMessage=nil;F.Safe(F.DrawATTIfShown)
     end
-    C_Timer.After(.01,step)
+    local function fail(err)
+        run.done=true
+        context.path=activeFrame and F.Safe(F.ATTPath,activeFrame)
+        c.captureError={seenAt=F.Now(),addonVersion=F.version,attVersion=F.Safe(C_AddOns and C_AddOns.GetAddOnMetadata,'AllTheThings','Version'),message=tostring(err):sub(1,2000),context=F.Clean(context)}
+        F.attBusy=false;F.attRun=nil;F.activeQuestDebug=nil;F.attMessage='Collector capture failed; previous snapshot retained. /folio att error shows the actual error.'
+        print('Folio ATT capture error: '..c.captureError.message);F.Safe(F.DrawATTIfShown)
+    end
+    step=function()
+        if run.cancelled or run.done or F.attRun~=run then return end
+        -- Final sorting, lazy mode/version reads and timer rescheduling must be
+        -- protected too, or a callback error leaves Reading stuck indefinitely.
+        local ok,err=pcall(work)
+        if not ok then fail(err)end
+    end
+    local scheduled,err=pcall(C_Timer.After,.01,step)
+    if not scheduled then fail(err)end
 end
 function F.OpenATT()
-    local app=F.ATTStatus()
-    if app and type(app.ToggleMainList)=='function' then F.Safe(app.ToggleMainList) end
+    local app=_G.AllTheThings
+    if type(app)=='table' and type(app.ToggleMainList)=='function' then F.Safe(app.ToggleMainList) end
 end
+

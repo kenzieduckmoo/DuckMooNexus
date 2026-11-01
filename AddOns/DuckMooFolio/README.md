@@ -1,6 +1,6 @@
 # DuckMoo Services: Character Folio
 
-**v0.5.4, by DuckMoo Media**
+**v0.5.5, by DuckMoo Media**
 
 An adventurer's binder for your alt army: character sheets, searchable warband information, personal plans, and collector field notes. A persistent sidebar, compact character cards, searchable roster, and an autosaving notebook. The original purple palette remains available; Trans Pride uses the exact blue, pink, and white of the supplied flag.
 
@@ -118,3 +118,36 @@ See USER-GUIDE.txt for current installation, commands, collected data, storage, 
 Open Roster, then Filters. Race and Level band combine with existing class, realm, tag and profession filters. Level bands include decade ranges plus 80+ and 90+. Profession slots offers Level 80+ / open slot, any open primary slot, full, and unknown. These options persist in named saved views. Roster rows and tooltips show recorded open-slot counts and profession observation time.
 
 Only the two primary professions use these slots; Cooking, Fishing and Archaeology do not. New snapshots explicitly capture primary slots, including a genuinely empty list. Partial reads preserve prior observations; completely empty reads are confirmed on a subsequent capture rather than clearing a prior snapshot during login. Legacy snapshots use their recorded profession list/time; characters with no profession observation remain unknown. Offline entries represent the last capture, not live state. Notes and tags are preserved.
+
+
+## ATT scanner parity (0.5.5)
+
+Collection leads now uses the relevant Fia ATDART 0.1.7 scanner fixes and recovery behavior, while remaining independent of FiammaCollector. ATT is optional and read-only. Its tables, filters and completion flags are never modified or stored as live references. Existing Folio notes, tags, filters, profession observations and offline snapshots are preserved.
+
+- Use canonical main Dungeons & Raids totals; ignore alternate/nested/dynamic instance copies and omit conflicting canonical totals. Older captures remain stored but are labelled for refresh.
+- Exclude Dawn of the Infinite only from ATDART target selection, retaining ordinary rankings and stable unrelated saved targets.
+- Count actual ATT Quest objects, excluding mount-customization unlock flags and hidden tracking quests. Keep the active account/character profile's eligibility policy. Extra current-character filter checks remain diagnostics.
+- Use canonical outdoor/instance roots when recognizable, retain a broad fallback for unknown layouts, skip classified instance loot trees, cache only static metadata and build diagnostic paths only for retained evidence/errors.
+- Incrementally traverse child lists using soft four-millisecond slices. Show progress, allow stopping, ignore cancelled callbacks, preserve the prior snapshot on failure and expose actual errors. A three-minute/two-million-node fail-safe reports an error rather than staying busy indefinitely.
+- Click an Unfinished Quests zone for a copyable report and optional native ATT zone/quest windows. The diagnostic window has a Folio-specific identity so both addons can coexist. Background scan progress only redraws Collection leads, not other Folio pages.
+
+Fully exit and restart WoW after installing this update, because new ATTDebug.lua and ATTControls.lua modules were added. `/folio version` should print **0.5.5**. Then open Collection leads and Refresh opportunities. The button becomes Stop scan while running; Scan stats prints saved or active progress.
+
+Folio commands use `/folio` or `/dmfolio`, never Fia's `/atdart` alias:
+
+| Command | Action |
+| --- | --- |
+| `/folio att` | Open Collection leads |
+| `/folio att refresh` | Refresh the current character, or stop an active scan |
+| `/folio att cancel` | Stop while preserving the last completed snapshot |
+| `/folio att stats` | Print live progress or last completed timing |
+| `/folio version` or `/folio att version` | Print loaded Folio version |
+| `/folio att debug on` | Enable extra diagnostics for the next Refresh |
+| `/folio att debug off` | Stop further extra diagnostics, including during a scan; retain saved evidence |
+| `/folio att debug` | Toggle diagnostics |
+| `/folio att quests` | Choose a saved zone report |
+| `/folio att quests <mapID or zone name>` | Open a specific zone report |
+| `/folio att quest <questID>` | Open ATT's quest window outside combat |
+| `/folio att error` | Show the last saved capture failure |
+
+Lua 5.1 checks cover the existing Folio workflows plus canonical Firelands totals, Dawn targeting, quest-object classification, debug reports, caching/pruning, in-flight debug off, progress, cancellation and callback failures. Automated checks do not establish live Retail completion or a particular speed multiplier. Record actual scan timing with `/folio att stats` after restarting the game and refreshing.

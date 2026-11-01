@@ -116,7 +116,7 @@ function methods:ClearFocus() self.focus=false end
 function methods:SetText(text,...) assert(select('#',...)==0,'SetText received an unintended extra argument');self.text=text;if self.scripts.OnTextChanged then self.scripts.OnTextChanged(self,false)end end
 Minimap=CreateFrame('Frame');Minimap:SetSize(140,140)
 ''')
-for filename in ['Model.lua','Core.lua','Coverage.lua','ATT.lua','UI.lua','Minimap.lua']:
+for filename in ['Model.lua','Core.lua','Coverage.lua','ATT.lua','ATTDebug.lua','ATTControls.lua','UI.lua','Minimap.lua']:
     lua.execute("assert(loadfile(...))('DuckMooFolio',F)",str(ROOT/filename))
 lua.execute(r'''
 F.Init();F.Snapshot(true)
@@ -223,6 +223,15 @@ F.minimap:GetScript('OnClick')(F.minimap,'LeftButton');assert(not F.frame:IsShow
 F.minimap:GetScript('OnClick')(F.minimap,'LeftButton');assert(F.frame:IsShown() and F.tab=='sheet')
 SlashCmdList.DUCKMOOFOLIO('roster');assert(F.tab=='roster')
 print('PASS: all folio pages, per-character note persistence, chooser, minimap, slash commands and stable frame pools')
+-- Use the real canonical main-category layout required by the updated adapter.
+function FixtureCanonicalATT(root,headers)
+ headers.DUNGEONS_AND_RAIDS=102
+ local main={headerID=102,g={}};local top={main}
+ for _,node in ipairs(root.g)do
+  if node.mapID then top[#top+1]=node else main.g[#main.g+1]=node end
+ end
+ root.g=top
+end
 -- ATT missing, not ready, read-only rankings, duplicate quests and capitals.
 local app,message=F.ATTStatus();assert(not app and message:find('Enable All The Things'))
 AllTheThings={Windows={}};app,message=F.ATTStatus();assert(not app and message:find('not ready'))
@@ -231,12 +240,12 @@ local raid={instanceID=11,text='Legacy raid',total=20,progress=5,visible=true}
 local root={modeString='Character mode',g={
  {tierID=2,headerID=100,g={dungeon}},
  {tierID=2,headerID=101,g={raid}},
- {tierID=2,mapID=107,g={{questID=1,collectible=true,visible=true},{questID=1,collectible=true,visible=true},{questID=2,collectible=true,collected=true},{questID=3,collectible=true,visible=false}}},
- {tierID=1,mapID=84,g={{questID=4,collectible=true,visible=true}}},
+ {tierID=2,mapID=107,g={{key='questID',questID=1,collectible=true,visible=true},{key='questID',questID=1,collectible=true,visible=true},{key='questID',questID=2,collectible=true,collected=true},{key='questID',questID=3,collectible=true,visible=false}}},
+ {tierID=1,mapID=84,g={{key='questID',questID=4,collectible=true,visible=true}}},
  {tierID=12,headerID=101,g={{instanceID=12,text='Current raid',total=100,progress=0,visible=true}}}
 }}
 AllTheThings={Windows={Prime={data=root}},HeaderConstants={DUNGEONS=100,RAIDS=101},GroupFilter=function()return true end}
-F.RefreshATT();local att=F.db.characters['Player-1'].att
+FixtureCanonicalATT(root,AllTheThings.HeaderConstants);F.RefreshATT();local att=F.db.characters['Player-1'].att
 assert(att and #att.dungeons==1 and att.dungeons[1].missing==10)
 assert(#att.raids==1 and att.raids[1].missing==15)
 assert(#att.zones==1 and att.zones[1].missing==1)
@@ -250,7 +259,7 @@ EJ_SelectTier=function(t)selectedTier=t end
 EJ_GetInstanceByIndex=function(index,isRaid)if index==1 then return isRaid and 11 or 10 end end
 AllTheThings.HeaderConstants={}
 root.g={{expansionID=2,g={dungeon,raid}}}
-F.RefreshATT();att=F.db.characters['Player-1'].att
+FixtureCanonicalATT(root,AllTheThings.HeaderConstants);F.RefreshATT();att=F.db.characters['Player-1'].att
 assert(selectedTier==2 and #att.dungeons==1 and #att.raids==1 and att.raids[1].expansion=='The Burning Crusade')
 -- Outdoor ATT groups often lack expansion headers. Resolve map ancestry and
 -- distinct versions of zones, and exclude TWW/Midnight from fresh and old lists.
@@ -258,16 +267,16 @@ local oldMap=C_Map.GetMapInfo
 local mapInfo={ [101]={mapType=2,name='Outland'},[102]={mapType=3,name='Zangarmarsh',parentMapID=101},[572]={mapType=2,name='Draenor'},[550]={mapType=3,name='Nagrand',parentMapID=572},[2395]={mapType=3,name='Eversong Woods',parentMapID=2537},[2393]={mapType=3,name='Silvermoon City',parentMapID=2537} }
 C_Map.GetMapInfo=function(id)return mapInfo[id] or oldMap(id)end
 root.g={
- {mapID=102,g={{questID=1001,collectible=true,visible=true}}},
- {mapID=550,g={{questID=1002,collectible=true,visible=true}}},
- {mapID=2395,g={{questID=1003,collectible=true,visible=true}}},
- {mapID=2393,g={{questID=1004,collectible=true,visible=true}}},
+ {mapID=102,g={{key='questID',questID=1001,collectible=true,visible=true}}},
+ {mapID=550,g={{key='questID',questID=1002,collectible=true,visible=true}}},
+ {mapID=2395,g={{key='questID',questID=1003,collectible=true,visible=true}}},
+ {mapID=2393,g={{key='questID',questID=1004,collectible=true,visible=true}}},
  {tierID=10,headerID=101,g={{instanceID=20,text='Dragonflight raid',total=10,progress=0,visible=true}}},
  {tierID=11,headerID=101,g={{instanceID=21,text='War Within raid',total=10,progress=0,visible=true}}},
  {tierID=12,headerID=101,g={{instanceID=22,text='Midnight raid',total=10,progress=0,visible=true}}},
  {headerID=101,g={{instanceID=23,text='Unknown raid',total=10,progress=0,visible=true}}}
 }
-AllTheThings.HeaderConstants={RAIDS=101};F.RefreshATT();att=F.db.characters['Player-1'].att
+AllTheThings.HeaderConstants={RAIDS=101};FixtureCanonicalATT(root,AllTheThings.HeaderConstants);F.RefreshATT();att=F.db.characters['Player-1'].att
 assert(#att.raids==1 and att.raids[1].name=='Dragonflight raid')
 local byMap={};for _,z in ipairs(att.zones)do byMap[z.mapID]=z end
 assert(byMap[102].expansion=='The Burning Crusade' and byMap[550].expansion=='Warlords of Draenor' and byMap[2395].expansion=='Midnight' and not byMap[2393])
@@ -313,7 +322,7 @@ local M=F.Model
 local function instance(id,progress,total,tier)
  return {instanceID=id,name='Instance '..id,kind='raid',progress=progress,total=total,tier=tier or 2,expansion='The Burning Crusade',missing=total-progress}
 end
-local snapshot={completion={instance(1,2,10),instance(2,20,100),instance(3,21,100),instance(4,0,100,11),instance(5,0,0),instance(6,-1,10)}}
+local snapshot={schema=6,completion={instance(1,2,10),instance(2,20,100),instance(3,21,100),instance(4,0,100,11),instance(5,0,0),instance(6,-1,10)}}
 local choices=0
 local target=F.SelectATDART(snapshot,function(n)choices=choices+1;assert(n==2);return 2 end)
 assert(target.instanceID==2 and choices==1)
@@ -323,15 +332,15 @@ local saved=F.Clean(snapshot);assert(F.GetATDART(saved).instanceID==2,'Saved tar
 local unique={completion={instance(1,1,3),instance(2,33,100)}};assert(F.SelectATDART(unique).instanceID==2,'Rounded percentages were used to compare completion')
 assert(F.SelectATDART({completion={instance(9,10,10)}}).progress==10)
 assert(F.SelectATDART({completion={instance(9,0,10,12)}})==nil)
-local old={raids={{name='Old raid',missing=90,tier=2}}};assert(not F.GetATDART(old) and old.targetEvaluated,'Missing totals must not fabricate a percentage')
+local old={raids={{name='Old raid',missing=90,tier=2}}};assert(not F.GetATDART(old) and old.raids[1].missing==90,'Missing totals must not fabricate a percentage')
 -- Capture total/progress, complete instances, and stable target with live adapter.
 AllTheThings.HeaderConstants={RAIDS=101,DUNGEONS=100}
 local root=AllTheThings.Windows.Prime.data
 root.g={{tierID=2,headerID=101,g={instance(40,2,10),instance(41,20,100),instance(42,10,10)}},{tierID=11,headerID=101,g={instance(43,0,10,11)}}}
 for _,group in ipairs(root.g)do for _,row in ipairs(group.g)do row.visible=true end end
-F.RefreshATT()
+FixtureCanonicalATT(root,AllTheThings.HeaderConstants);F.RefreshATT()
 local att=F.db.characters['Player-1'].att
-assert(att.schema==3 and #att.completion==3 and #att.raids==2 and att.atdart and att.atdart.total>0)
+assert(att.schema==6 and #att.completion==3 and #att.raids==2 and att.atdart and att.atdart.total>0)
 local chosen=att.atdart.instanceID;F.selected='Player-1';F.tab='att';F.Render();F.Render();assert(att.atdart.instanceID==chosen)
 local sawPercent=false;for _,f in ipairs(frames)do if f.kind=='FontString' and f:IsShown() and f:GetText()=='20.00%'then sawPercent=true end end;assert(sawPercent,'Target percentage was not displayed')
 -- Coverage: a trained skill, explicit zero rank, and an unscanned base profession.
@@ -521,4 +530,117 @@ NOW=NOW+2;F.Professions(c);assert(c.primaryProfessions.count==0 and M.PrimarySlo
 GetProfessions,GetProfessionInfo=original,info
 F.filters={race='Human',levelBand='80+',professionSlots='open80'};assert(F.SaveRosterView('Slot test'));F.filters={};F.ApplyRosterView('Slot test');assert(F.filters.race=='Human' and F.filters.levelBand=='80+' and F.filters.professionSlots=='open80')
 print('PASS: race/level bands, primary slot filters, sparse/empty/partial captures and saved-view persistence')
+""")
+
+lua.execute(r"""
+-- The same canonical Firelands and quest-object regressions as Fia's addon.
+F.selected=F.current;F.tab='att'
+local notes=F.db.characters[F.current].notes.general
+local flags=F.db.characters[F.current].tags
+local firelands={instanceID=78,tierID=4,text='Firelands',total=303,progress=294,visible=true}
+local dawn={instanceID=1209,tierID=10,text='Dawn',total=100,progress=0,visible=true}
+local wrong={instanceID=78,tierID=4,text='Alternate Firelands',total=193,progress=10,visible=true}
+local zone={mapID=2133,g={}}
+for id=1,15 do zone.g[id]={key='mountmodID',mountmodID=id,questID=id,collectible=true,visible=true}end
+for id=16,18 do zone.g[id]={key='questID',questID=id,collectible=true,visible=true,races={52,70}}end
+local main={headerID=102,g={firelands,dawn}}
+AllTheThings={HeaderConstants={DUNGEONS_AND_RAIDS=102,RAIDS=101},Windows={Prime={data={g={{headerID=101,g={wrong}},main,zone}}}},GroupFilter=function()return true end}
+EJ_GetCurrentTier=function()return 4 end;EJ_GetNumTiers=function()return 4 end;EJ_SelectTier=function()end
+EJ_GetInstanceByIndex=function(i,raid)if i==1 then return raid and 78 or 1209 end end
+SlashCmdList.DUCKMOOFOLIO('att debug on');F.RefreshATT()
+local c=F.db.characters[F.current];local snapshot=c.att
+assert(snapshot.atdart.instanceID==78 and snapshot.atdart.progress==294 and snapshot.atdart.total==303)
+assert(#snapshot.dungeons==1 and snapshot.dungeons[1].instanceID==1209,'Dawn was dropped from ordinary rankings')
+assert(snapshot.zones[1].missing==3 and #snapshot.zones[1].questRows==18)
+assert(F.QuestReport(c,snapshot,snapshot.zones[1]):find('objectKey=mountmodID'))
+F.ShowQuestDebug(snapshot.zones[1],c,snapshot)
+assert(F.questDebugFrame.name=='DuckMooFolioQuestDebug','Folio reused Fia global frame identity')
+assert(F.questDebugFrame.edit:GetText():find('Character Folio ATT'))
+local prior=snapshot;AllTheThings.Windows.Prime.data.g={zone};F.RefreshATT();assert(c.att==prior)
+assert(c.notes.general==notes and c.tags==flags,'ATT scan changed personal notes/tags')
+print('PASS: Folio canonical Firelands totals, Dawn-only target exclusion, Zaralek 18-to-3 quest classification, separate diagnostic window and preserved personal data')
+""")
+
+lua.execute(r'''
+-- Known instance totals make the nested loot tree unnecessary to this addon.
+local mapCalls,journalCalls,selectCalls=0,0,0
+C_Map.GetMapInfo=function(id)mapCalls=mapCalls+1;return {mapType=3,name='Nagrand'}end
+EJ_GetCurrentTier=function()return 4 end;EJ_GetNumTiers=function()return 4 end
+EJ_SelectTier=function()selectCalls=selectCalls+1 end
+EJ_GetInstanceByIndex=function(i,raid)journalCalls=journalCalls+1;if i==1 and raid then return 78 end end
+local loot={};for i=1,10000 do loot[i]=setmetatable({itemID=i},{__index=function()error('Irrelevant instance loot was read')end})end
+local raid={instanceID=78,tierID=4,total=303,progress=294,text='Firelands',g=loot}
+local zone={mapID=107,g={{key='questID',questID=1001,collectible=true,visible=true}}}
+local main={headerID=102,g={raid}}
+AllTheThings={HeaderConstants={DUNGEONS_AND_RAIDS=102},Windows={Prime={data={g={main,zone}}}},GroupFilter=function()return true end}
+SlashCmdList.DUCKMOOFOLIO('att debug off');F.RefreshATTControl()
+local c=F.db.characters[F.current];local first=c.att
+assert(first.raids[1].missing==9 and first.zones[1].missing==1)
+assert(first.scan.nodes==5 and first.scan.prunedInstances==1,'Instance loot subtree was traversed')
+local calls,selects,maps=journalCalls,selectCalls,mapCalls
+F.RefreshATTControl();assert(c.att.raids[1].missing==9 and c.att.zones[1].missing==1)
+assert(journalCalls==calls and selectCalls==selects and mapCalls==maps,'Static metadata was reread')
+assert(selects==5,'Encounter Journal selection was not restored after the initial cache build')
+-- A simulated clock and queued timers exercise a real between-batch toggle.
+local queue,head={},1;local timer=C_Timer.After
+C_Timer.After=function(delay,fn)assert(delay==.01);queue[#queue+1]=fn end
+local ticks=0;debugprofilestop=function()ticks=ticks+.2;return ticks end
+C_QuestLog=C_QuestLog or {}
+local details=0;C_QuestLog.IsQuestFlaggedCompleted=function()details=details+1;return false end
+zone.g={};for id=1,1000 do zone.g[id]={key='questID',questID=id,collectible=true,visible=true,text='Quest '..id}end
+SlashCmdList.DUCKMOOFOLIO('att debug on');F.RefreshATTControl();assert(F.attBusy)
+queue[head]();head=head+1;assert(F.attBusy and details>0,'Debug batch did not run')
+local beforeOff=details
+SlashCmdList.DUCKMOOFOLIO('att   DEBUG   OFF  ');SlashCmdList.DUCKMOOFOLIO('att debug off')
+assert(F.db.settings.questDebug==false and F.activeQuestDebug.enabled==false)
+while queue[head]do queue[head]();head=head+1 end
+assert(details==beforeOff,'Extra diagnostics continued after debug off')
+assert(not F.attBusy and not F.activeQuestDebug and c.att.zones[1].missing==1000)
+assert(c.att.questDebugStopped and c.att.questDebug,'Earlier captured debug evidence was erased')
+local partial=c.att
+F.RefreshATTControl();while queue[head]do queue[head]();head=head+1 end
+assert(not c.att.questDebug and not c.att.questDebugStopped and c.att.zones[1].missing==1000)
+assert(details==beforeOff and partial.questDebug,'Normal Refresh called debug APIs or rewrote older evidence')
+assert(c.att.scan.batches>1 and c.att.scan.nodes==1004)
+SlashCmdList.DUCKMOOFOLIO('att stats')
+C_Timer.After=timer;debugprofilestop=nil
+print('PASS: 10,000 irrelevant loot nodes skipped; static metadata reused; queued time-budget batches; debug off is idempotent, stops in-flight diagnostics and preserves counts/evidence')
+''')
+
+lua.execute(r"""
+-- Real ATT exposes canonical outdoor/instance roots. Do not expand unrelated
+-- dynamic categories, whose lazy g access may rebuild enormous duplicate trees.
+local zone={mapID=107,g={}}
+for id=1,1000 do zone.g[id]={key='questID',questID=id,collectible=true,visible=true,text='Quest '..id}end
+local main={headerID=102,g={{instanceID=78,tierID=4,total=303,progress=294,text='Firelands'}}}
+local outdoor={headerID=300,g={zone}}
+local unrelated=setmetatable({},{__index=function(_,key)if key=='g'then error('Unrelated dynamic category was expanded')end end})
+local root={modeString='Account mode',g={main,outdoor,unrelated}}
+AllTheThings={HeaderConstants={DUNGEONS_AND_RAIDS=102,OUTDOOR_ZONES=300},Windows={Prime={data=root}}}
+F.RefreshATTControl();local c=F.db.characters[F.current];local prior=c.att
+assert(not F.attBusy and prior.zones[1].missing==1000 and prior.scan.scope=='main instances + outdoor zones')
+-- Progress, cancellation, and stale queued callbacks use a per-run identity.
+local timer=C_Timer.After;local queue,head={},1
+C_Timer.After=function(delay,fn)assert(delay==.01);queue[#queue+1]=fn end
+local tick=0;debugprofilestop=function()tick=tick+1;return tick end
+local wall=0;GetTimePreciseSec=function()wall=wall+.6;return wall end
+F.Show('att');prior=c.att;F.RefreshATTControl();queue[head]();head=head+1
+assert(F.attBusy and F.attMessage:find('nodes'))
+local cancelled=F.attRun;F.CancelATT();assert(not F.attBusy and c.att==prior and cancelled.cancelled)
+F.RefreshATTControl();local replacement=F.attRun
+queue[head]();head=head+1;assert(F.attBusy and F.attRun==replacement,'Cancelled timer changed the replacement scan')
+while queue[head]do queue[head]();head=head+1 end
+assert(not F.attBusy and c.att~=prior and c.att.zones[1].missing==1000)
+prior=c.att
+-- Finalization was outside the old protected callback; such errors must now
+-- release Reading and retain the prior good snapshot, with an actual report.
+AllTheThings.Windows.Prime.data=setmetatable({g={main,outdoor}},{__index=function(_,key)if key=='modeString'then error('Synthetic finalization failure')end end})
+F.RefreshATTControl();while queue[head]do queue[head]();head=head+1 end
+assert(not F.attBusy and not F.attRun and c.att==prior)
+assert(c.captureError.message:find('Synthetic finalization failure') and c.captureError.context.stage=='finishing capture')
+C_Timer.After=function()error('Synthetic scheduling failure')end
+F.RefreshATTControl();assert(not F.attBusy and c.att==prior and c.captureError.message:find('Synthetic scheduling failure'))
+C_Timer.After=timer;debugprofilestop=nil;GetTimePreciseSec=nil
+SlashCmdList.DUCKMOOFOLIO('att version')
+print('PASS: canonical scope skips dynamic duplicates; visible progress; cancel/restart rejects stale callbacks; finalization and initial scheduling failures release busy state and preserve saved results')
 """)

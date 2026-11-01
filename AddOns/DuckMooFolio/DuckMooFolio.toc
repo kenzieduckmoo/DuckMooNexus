@@ -2,7 +2,7 @@
 ## Title: DuckMoo Services: Character Folio
 ## Notes: An adventurer's folio, searchable warband roster, and notebook for your collection gremlins.
 ## Author: DuckMoo Media
-## Version: 0.5.4
+## Version: 0.5.5
 ## SavedVariables: DuckMooFolioDB
 ## OptionalDeps: AllTheThings, DuckMooPlanner
 ## Category: DuckMoo Media
@@ -10,5 +10,7 @@ Model.lua
 Core.lua
 Coverage.lua
 ATT.lua
+ATTDebug.lua
+ATTControls.lua
 UI.lua
 Minimap.lua
